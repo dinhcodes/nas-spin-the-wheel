@@ -7,7 +7,8 @@
     "build": "next build --webpack",
     "start": "next start",
     "check": "node lib/lucky-draw.check.ts",
-    "sim": "node scripts/hourly-sim.ts"
+    "sim": "node scripts/hourly-sim.ts",
+    "scenarios": "node scripts/scenarios.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
