@@ -28,13 +28,17 @@ function normalize(parsed: Partial<State>): State {
 export function useDrawState() {
   const [state, setState] = useState<State>(defaultState)
   const [loaded, setLoaded] = useState(false)
-  // true while applying a remote snapshot, so we don't echo it back to the DB.
-  const applyingRemote = useRef(false)
+  // The exact object last applied FROM remote. We only push when `state` is a
+  // different object than this — identity comparison is race-proof (unlike a
+  // timing flag) even when a remote echo and a local edit batch together.
+  const remoteObj = useRef<State | null>(null)
+  // Don't push until the first remote snapshot arrives (avoids clobbering the
+  // shared state with a stale local cache on startup).
+  const ready = useRef(!SYNC_ENABLED)
   const stateRef = useRef(state)
   stateRef.current = state
 
   useEffect(() => {
-    // instant paint from the local cache
     try {
       const raw = localStorage.getItem(KEY)
       if (raw) setState(normalize(JSON.parse(raw)))
@@ -45,12 +49,13 @@ export function useDrawState() {
 
     if (!SYNC_ENABLED) return
     const unsub = subscribeState((remote) => {
+      ready.current = true
       if (remote) {
-        applyingRemote.current = true
-        setState(normalize(remote))
+        const next = normalize(remote)
+        remoteObj.current = next
+        setState(next)
       } else {
-        // empty DB -> seed it with what this device currently has
-        pushState(stateRef.current)
+        pushState(stateRef.current) // empty DB -> seed it
       }
     })
     return unsub
@@ -59,9 +64,9 @@ export function useDrawState() {
   useEffect(() => {
     if (!loaded) return
     localStorage.setItem(KEY, JSON.stringify(state))
-    if (SYNC_ENABLED) {
-      if (applyingRemote.current) applyingRemote.current = false
-      else pushState(state) // local edit -> broadcast
+    // Push only genuine local edits (state is a new object, not the remote one).
+    if (SYNC_ENABLED && ready.current && state !== remoteObj.current) {
+      pushState(state)
     }
   }, [state, loaded])
 
