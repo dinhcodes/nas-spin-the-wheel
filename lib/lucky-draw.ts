@@ -66,6 +66,22 @@ export const LABELS: Record<ItemKey, string> = {
   wildcard: "?",
 };
 
+// Extra info shown in the winner modal for the trial prizes.
+export const PRIZE_DETAILS: Partial<Record<ItemKey, { when: string; offer: string }>> = {
+  poleTrial: {
+    when: "Tentatively Sat 22 / Sun 23 Aug",
+    offer: "You go free — bring a friend for just $10 more (U.P. $15)",
+  },
+  hammock: {
+    when: "Sat 29 Aug, 9:00 AM",
+    offer: "You go free — bring a friend for just $10 more (U.P. $15)",
+  },
+  hoopTrial: {
+    when: "Lyra · Sun 30 Aug, 3:30 PM",
+    offer: "You go free — bring a friend for just $10 more (U.P. $15)",
+  },
+};
+
 const BLOCK_MS = 30 * 60 * 1000;
 
 export function defaultState(): State {
