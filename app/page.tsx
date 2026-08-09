@@ -19,7 +19,7 @@ export default function Page() {
 
   if (!loaded) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#150d1c]">
+      <main className="flex min-h-screen items-center justify-center">
         <BlobBackground />
         <p className="text-warm-ivory/70">Loading…</p>
       </main>
@@ -27,7 +27,7 @@ export default function Page() {
   }
 
   return (
-    <main className="relative min-h-screen bg-[#150d1c]">
+    <main className="relative min-h-screen">
       <BlobBackground />
 
       {/* hidden control, revealed by the corner gear */}

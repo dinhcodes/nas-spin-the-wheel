@@ -2,17 +2,17 @@
 
 import { useEffect, useRef } from 'react'
 
-// Lava-lamp: soft glowing brand-purple blobs drifting on a dark base, blurred
-// together and blended so they merge; they drift forever and flee the cursor.
+// Lava-lamp: soft glowing brand-purple blobs on a dark base, blurred together
+// and screen-blended so they merge; they drift forever and flee the cursor.
 // ponytail: full-screen blur is GPU-ish but fine for ~6 blobs; drop the count
 // or the blur radius if it ever chugs on weak hardware.
 const BLOBS = [
-  { color: '#a187a1', size: 540 }, // venus
-  { color: '#b99bb8', size: 470 }, // venus-light
-  { color: '#c9a2cf', size: 520 }, // lavender
-  { color: '#6f5a90', size: 600 }, // deep purple
-  { color: '#8a6f9e', size: 440 }, // muted violet
-  { color: '#7d6bd6', size: 400 }, // periwinkle
+  { color: '#a187a1', size: 540, x: 15, y: 20 }, // venus       (x/y in vw/vh)
+  { color: '#b99bb8', size: 470, x: 82, y: 24 }, // venus-light
+  { color: '#c9a2cf', size: 520, x: 28, y: 72 }, // lavender
+  { color: '#6f5a90', size: 600, x: 68, y: 62 }, // deep purple
+  { color: '#8a6f9e', size: 440, x: 50, y: 12 }, // muted violet
+  { color: '#7d6bd6', size: 400, x: 88, y: 82 }, // periwinkle
 ]
 
 const REPEL_RADIUS = 280
@@ -26,7 +26,6 @@ interface Blob {
 }
 
 export function BlobBackground() {
-  const rootRef = useRef<HTMLDivElement>(null)
   const els = useRef<(HTMLDivElement | null)[]>([])
   const blobs = useRef<Blob[]>([])
   const mouse = useRef({ x: -9999, y: -9999 })
@@ -35,9 +34,9 @@ export function BlobBackground() {
     const W = () => window.innerWidth
     const H = () => window.innerHeight
 
-    blobs.current = BLOBS.map((_, i) => ({
-      x: (0.15 + 0.7 * ((i * 0.41 + 0.2) % 1)) * W(),
-      y: (0.15 + 0.7 * ((i * 0.67 + 0.1) % 1)) * H(),
+    blobs.current = BLOBS.map((b, i) => ({
+      x: (b.x / 100) * W(),
+      y: (b.y / 100) * H(),
       vx: (i % 2 ? 1 : -1) * (0.3 + 0.12 * i),
       vy: (i % 3 ? -1 : 1) * (0.3 + 0.09 * i),
       phase: i * 1.7,
@@ -53,7 +52,6 @@ export function BlobBackground() {
       })
     }
     draw()
-    if (rootRef.current) rootRef.current.style.opacity = '1'
 
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     if (reduce) return
@@ -120,9 +118,8 @@ export function BlobBackground() {
 
   return (
     <div
-      ref={rootRef}
       aria-hidden
-      className="fixed inset-0 -z-10 overflow-hidden opacity-0 transition-opacity duration-700"
+      className="fixed inset-0 -z-10 overflow-hidden"
       style={{
         pointerEvents: 'none',
         background:
@@ -140,6 +137,8 @@ export function BlobBackground() {
             style={{
               width: b.size,
               height: b.size,
+              // initial spread before JS takes over (vw/vh so no corner-clump)
+              transform: `translate(calc(${b.x}vw - ${b.size / 2}px), calc(${b.y}vh - ${b.size / 2}px))`,
               background: `radial-gradient(circle at 50% 50%, ${b.color} 0%, transparent 68%)`,
               mixBlendMode: 'screen',
               opacity: 0.8,
