@@ -23,5 +23,5 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts"
   ],
-  "exclude": ["node_modules", "lib/lucky-draw.check.ts"]
+  "exclude": ["node_modules", "lib/lucky-draw.check.ts", "scripts/**"]
 }
