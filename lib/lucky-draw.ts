@@ -31,7 +31,8 @@ export interface Item {
 
 export interface State {
   items: Record<ItemKey, Item>;
-  spinsPerBlock: number; // expected spins per 30-min block at peak
+  spinsPerBlock: number; // seed / fallback expected spins per 30-min block at peak
+  autoRate: boolean; // drive pacing from the live rolling spin rate
   spinLog: number[]; // epoch-ms timestamps, one per spin
   wildcardGiven: number; // how many "?" handed out (for restocking candies)
   eventDays: string[]; // ["2026-08-12","2026-08-13"], local time
@@ -74,6 +75,7 @@ export function defaultState(): State {
       wildcard: mk("?", Infinity),
     },
     spinsPerBlock: 90,
+    autoRate: true,
     spinLog: [],
     wildcardGiven: 0,
     eventDays: ["2026-08-12", "2026-08-13"],
@@ -91,9 +93,42 @@ function blockWeight(state: State, hour: number): number {
   return firstHour || lastHour ? 0.5 : 1;
 }
 
+const MIN_ROLLING_SAMPLE = 5; // need at least this many spins before trusting live rate
+
+// Demand weight of the block containing `now`; 0 when outside event hours.
+export function currentBlockWeight(state: State, nowMs: number): number {
+  const d = new Date(nowMs);
+  const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
+    2,
+    "0",
+  )}-${String(d.getDate()).padStart(2, "0")}`;
+  const h = d.getHours();
+  if (!state.eventDays.includes(key) || h < state.startHour || h >= state.endHour)
+    return 0;
+  return blockWeight(state, h);
+}
+
+// Spins recorded in the rolling 30-min window ending at `now`.
+export function rollingSpins(state: State, nowMs: number): number {
+  return state.spinLog.filter((t) => t > nowMs - BLOCK_MS && t <= nowMs).length;
+}
+
+// The spins-per-block figure pacing actually uses. In auto mode this is the live
+// rolling rate normalized to a full-strength block (so a half-demand hour still
+// projects a sensible peak); it falls back to the manual seed until enough spins
+// have been observed, or whenever auto is off / we're outside event hours.
+export function effectiveSpinsPerBlock(state: State, nowMs: number): number {
+  if (!state.autoRate) return state.spinsPerBlock;
+  const w = currentBlockWeight(state, nowMs);
+  const rolling = rollingSpins(state, nowMs);
+  if (w > 0 && rolling >= MIN_ROLLING_SAMPLE) return Math.max(1, rolling / w);
+  return state.spinsPerBlock;
+}
+
 // Expected spins still to come from `nowMs` to the end of the event.
 // The current block is prorated by the fraction of it remaining.
 export function remainingSpins(state: State, nowMs: number): number {
+  const peak = effectiveSpinsPerBlock(state, nowMs);
   let total = 0;
   for (const day of state.eventDays) {
     const [y, m, d] = day.split("-").map(Number);
@@ -102,7 +137,7 @@ export function remainingSpins(state: State, nowMs: number): number {
         const start = new Date(y, m - 1, d, h, min).getTime();
         const end = start + BLOCK_MS;
         if (end <= nowMs) continue; // block fully in the past
-        const w = blockWeight(state, h) * state.spinsPerBlock;
+        const w = blockWeight(state, h) * peak;
         if (start >= nowMs) {
           total += w; // fully in the future
         } else {

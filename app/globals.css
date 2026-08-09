@@ -82,7 +82,18 @@
 
 @layer utilities {
   .bg-hero {
-    background: linear-gradient(135deg, #fff8f2 0%, #f3d6cf 35%, #dccbdf 100%);
+    background:
+      radial-gradient(
+        90rem 60rem at 15% -10%,
+        rgba(244, 179, 147, 0.28),
+        transparent 60%
+      ),
+      radial-gradient(
+        80rem 55rem at 100% 0%,
+        rgba(177, 147, 191, 0.28),
+        transparent 55%
+      ),
+      linear-gradient(180deg, #fffdfb 0%, #fff8f2 55%, #fdf1f4 100%);
   }
   .bg-celestial {
     background: radial-gradient(

@@ -16,17 +16,10 @@ const SEG = 360 / ITEM_ORDER.length
 const SPIN_MS = 3500
 const TURNS = 5
 
-// Brand palette, alternating; "?" gets the dark plum so it reads as special.
-const FILLS = [
-  '#a187a1', // venus
-  '#ecc4ac', // desert-sand
-  '#c4aca4', // bison-hide
-  '#b99bb8', // venus-light
-  '#a187a1',
-  '#ecc4ac',
-  '#c4aca4',
-  '#4b343c', // matterhorn (wildcard)
-]
+// Four bright, on-brand pastels in an A-B-C-D-A-B-C-D rotation: violet / peach /
+// rose / gold. Even, playful, no two neighbours alike, no heavy dark slice.
+const PALETTE = ['#b193bf', '#f4b393', '#e8a9c2', '#f4d29a']
+const FILLS = ITEM_ORDER.map((_, i) => PALETTE[i % PALETTE.length])
 
 const R = 96
 const C = 100
@@ -111,19 +104,18 @@ export function Wheel({
           {ITEM_ORDER.map((key, i) => {
             const [lx, ly] = pointOnCircle(i * SEG + SEG / 2, R * 0.62)
             const label = state.items[key].label
-            const dark = FILLS[i] === '#4b343c'
             return (
               <g key={key}>
                 <path
                   d={segmentPath(i)}
                   fill={FILLS[i]}
                   stroke="#fffdfb"
-                  strokeWidth={1.5}
+                  strokeWidth={2}
                 />
                 <text
                   x={lx}
                   y={ly}
-                  fill={dark ? '#fff8f2' : '#4b343c'}
+                  fill="#4b343c"
                   fontSize={key === 'wildcard' ? 16 : 8}
                   fontWeight={700}
                   textAnchor="middle"
@@ -149,7 +141,7 @@ export function Wheel({
 
       {winner && (
         <div
-          className="animate-pop-in fixed inset-0 z-40 flex items-center justify-center bg-matterhorn/40 p-6"
+          className="animate-pop-in fixed inset-0 z-40 flex items-center justify-center bg-white/50 p-6 backdrop-blur-sm"
           onClick={() => setWinner(null)}
         >
           <Confetti />

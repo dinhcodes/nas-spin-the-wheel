@@ -5,8 +5,8 @@ Rigged lucky-draw wheel for the NAS event (12–13 Aug, 9am–6pm). Two views:
 - **Draw** — the event-facing wheel. 8 equal-looking slices, 3.5s fast→slow
   stop. The winner is chosen by a pacing model, not the visual, so prizes
   deplete evenly across both days instead of vanishing early.
-- **Control** — stock +/−, live odds, manual boost (with green/amber warnings),
-  editable spins-per-block, and a live spin tracker.
+- **Control** (behind the corner gear) — stock +/−, live odds, a priority
+  toggle, auto-pacing from the live rolling 30-min spin rate, and live counters.
 
 ## How the pacing works
 

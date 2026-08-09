@@ -4,30 +4,15 @@ import { useEffect, useState } from 'react'
 import {
   computeOdds,
   remainingSpins,
-  spinsThisBlock,
+  rollingSpins,
+  effectiveSpinsPerBlock,
+  currentBlockWeight,
   defaultState,
   ITEM_ORDER,
   type ItemKey,
   type State,
 } from '@/lib/lucky-draw'
 import { cn } from '@/lib/utils'
-
-// Target spins for the 30-min block containing `now`, per the demand model.
-function targetThisBlock(state: State, now: number) {
-  const d = new Date(now)
-  const h = d.getHours()
-  const inEvent =
-    state.eventDays.includes(
-      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(
-        d.getDate(),
-      ).padStart(2, '0')}`,
-    ) && h >= state.startHour && h < state.endHour
-  if (!inEvent) return 0
-  const half =
-    state.halfDemandFirstLastHour &&
-    (h < state.startHour + 1 || h >= state.endHour - 1)
-  return Math.round(state.spinsPerBlock * (half ? 0.5 : 1))
-}
 
 export function Control({
   state,
@@ -53,9 +38,9 @@ export function Control({
     0,
   )
   const wildcardsNeeded = Math.max(0, Math.round(remaining - realLeft))
-  const thisBlock = spinsThisBlock(state, now)
-  const target = targetThisBlock(state, now)
-  const anyBoost = ITEM_ORDER.some((k) => state.items[k].boostPct !== 0)
+  const rolling = rollingSpins(state, now)
+  const effective = Math.round(effectiveSpinsPerBlock(state, now))
+  const usingLive = state.autoRate && currentBlockWeight(state, now) > 0 && rolling >= 5
 
   const setItem = (key: ItemKey, patch: Partial<State['items'][ItemKey]>) =>
     setState((s) => ({
@@ -64,65 +49,81 @@ export function Control({
     }))
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
+    <div className="flex w-full flex-col gap-6">
       {/* live stats */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Stat label="Spins this block" value={`${thisBlock} / ${target || '—'}`} />
-        <Stat label="Spins left (est.)" value={Math.round(remaining).toString()} />
+        <Stat label="Spins / 30 min (live)" value={rolling.toString()} />
+        <Stat
+          label="Pacing at / block"
+          value={effective.toString()}
+          hint={usingLive ? 'from live rate' : 'from seed'}
+        />
         <Stat label="Real prizes left" value={realLeft.toString()} />
-        <Stat label="? given / needed" value={`${state.wildcardGiven} / ~${wildcardsNeeded}`} />
+        <Stat
+          label="? given / needed"
+          value={`${state.wildcardGiven} / ~${wildcardsNeeded}`}
+        />
       </div>
 
-      {/* spins per block */}
-      <label className="bg-card flex items-center justify-between gap-4 rounded-2xl border p-4">
-        <div>
-          <p className="font-medium">Spins per 30-min block (peak)</p>
+      {/* pace source */}
+      <div className="bg-card flex flex-col gap-3 rounded-2xl border p-4">
+        <label className="flex items-center gap-3">
+          <input
+            type="checkbox"
+            checked={state.autoRate}
+            onChange={(e) =>
+              setState((s) => ({ ...s, autoRate: e.target.checked }))
+            }
+            className="size-4"
+          />
+          <span className="font-medium">
+            Auto-pace from the live rolling 30-min spin rate
+          </span>
+        </label>
+        <div className="flex items-center justify-between gap-4">
           <p className="text-muted-foreground text-sm">
-            First & last hour each day count as half. Drives the whole pace.
+            {state.autoRate
+              ? 'Uses the last 30 min of spins; the number below is the fallback until enough spins are counted.'
+              : 'Auto off — pacing uses this fixed number.'}
           </p>
+          <div className="flex items-center gap-2">
+            <span className="text-muted-foreground text-sm whitespace-nowrap">
+              Seed / block
+            </span>
+            <input
+              type="number"
+              min={1}
+              value={state.spinsPerBlock}
+              onChange={(e) =>
+                setState((s) => ({
+                  ...s,
+                  spinsPerBlock: Math.max(1, Number(e.target.value) || 1),
+                }))
+              }
+              className="bg-background w-20 rounded-lg border px-3 py-2 text-right text-lg font-semibold"
+            />
+          </div>
         </div>
-        <input
-          type="number"
-          min={1}
-          value={state.spinsPerBlock}
-          onChange={(e) =>
-            setState((s) => ({
-              ...s,
-              spinsPerBlock: Math.max(1, Number(e.target.value) || 1),
-            }))
-          }
-          className="bg-background w-24 rounded-lg border px-3 py-2 text-right text-lg font-semibold"
-        />
-      </label>
-
-      {anyBoost && (
-        <div className="border-boost bg-boost/10 text-boost flex items-center gap-2 rounded-2xl border px-4 py-3 text-sm font-medium">
-          ⚠ Rigging active — boosted items are green, everything else (amber) has
-          reduced odds.
-        </div>
-      )}
+      </div>
 
       {/* items */}
       <div className="bg-card overflow-hidden rounded-2xl border">
-        <div className="text-muted-foreground grid grid-cols-[1fr_auto_auto_auto] gap-3 border-b px-4 py-2 text-xs font-semibold tracking-wide uppercase">
+        <div className="text-muted-foreground grid grid-cols-[1fr_auto_auto] gap-3 border-b px-4 py-2 text-xs font-semibold tracking-wide uppercase">
           <span>Prize</span>
           <span className="text-center">Stock</span>
-          <span className="text-center">Boost %</span>
           <span className="text-right">Odds</span>
         </div>
         {ITEM_ORDER.map((key) => {
           const it = state.items[key]
-          const boosted = it.boostPct > 0
-          const reduced = anyBoost && it.boostPct <= 0
           const pct = (odds.probs[key] * 100).toFixed(1)
           const isWild = key === 'wildcard'
+          const priority = it.priority > 1
           return (
             <div
               key={key}
               className={cn(
-                'grid grid-cols-[1fr_auto_auto_auto] items-center gap-3 border-b px-4 py-3 last:border-b-0',
-                boosted && 'bg-boost/10',
-                reduced && 'bg-reduced/10',
+                'grid grid-cols-[1fr_auto_auto] items-center gap-3 border-b px-4 py-3 last:border-b-0',
+                priority && 'bg-primary/5',
               )}
             >
               <div className="flex items-center gap-2">
@@ -130,17 +131,17 @@ export function Control({
                 {!isWild && (
                   <button
                     onClick={() =>
-                      setItem(key, { priority: it.priority > 1 ? 1 : 2 })
+                      setItem(key, { priority: priority ? 1 : 2 })
                     }
                     className={cn(
                       'rounded-full border px-2 py-0.5 text-xs',
-                      it.priority > 1
+                      priority
                         ? 'border-primary text-primary font-semibold'
                         : 'text-muted-foreground',
                     )}
-                    title="Toggle higher priority (cleared faster)"
+                    title="Toggle higher priority (cleared first)"
                   >
-                    {it.priority > 1 ? '★ priority' : 'normal'}
+                    {priority ? '★ clear first' : 'normal'}
                   </button>
                 )}
               </div>
@@ -165,7 +166,9 @@ export function Control({
                       min={0}
                       value={it.qty}
                       onChange={(e) =>
-                        setItem(key, { qty: Math.max(0, Number(e.target.value) || 0) })
+                        setItem(key, {
+                          qty: Math.max(0, Number(e.target.value) || 0),
+                        })
                       }
                       className="bg-background w-14 rounded-lg border px-2 py-1 text-center"
                     />
@@ -176,33 +179,8 @@ export function Control({
                 )}
               </div>
 
-              {/* boost */}
-              <div className="flex justify-center">
-                {isWild ? (
-                  <span className="text-muted-foreground text-sm">auto</span>
-                ) : (
-                  <input
-                    type="number"
-                    value={it.boostPct}
-                    onChange={(e) =>
-                      setItem(key, { boostPct: Number(e.target.value) || 0 })
-                    }
-                    className={cn(
-                      'bg-background w-16 rounded-lg border px-2 py-1 text-center',
-                      boosted && 'border-boost text-boost font-semibold',
-                    )}
-                  />
-                )}
-              </div>
-
               {/* odds */}
-              <span
-                className={cn(
-                  'text-right font-semibold tabular-nums',
-                  boosted && 'text-boost',
-                  reduced && 'text-reduced',
-                )}
-              >
+              <span className="text-right font-semibold tabular-nums">
                 {pct}%
               </span>
             </div>
@@ -212,7 +190,7 @@ export function Control({
 
       <button
         onClick={() => {
-          if (confirm('Reset all stock, boosts and spin history to defaults?'))
+          if (confirm('Reset all stock, priorities and spin history to defaults?'))
             setState(() => defaultState())
         }}
         className="text-muted-foreground hover:text-destructive self-start text-sm underline"
@@ -223,11 +201,20 @@ export function Control({
   )
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({
+  label,
+  value,
+  hint,
+}: {
+  label: string
+  value: string
+  hint?: string
+}) {
   return (
     <div className="bg-card rounded-2xl border p-3 text-center">
       <p className="text-muted-foreground text-xs">{label}</p>
       <p className="mt-1 text-lg font-bold tabular-nums">{value}</p>
+      {hint && <p className="text-muted-foreground text-[10px]">{hint}</p>}
     </div>
   )
 }

@@ -5,9 +5,8 @@ import {
   computeOdds,
   pickWinner,
   applyDraw,
-  remainingSpins,
+  effectiveSpinsPerBlock,
   ITEM_ORDER,
-  type State,
   type ItemKey,
 } from "./lucky-draw.ts";
 
@@ -79,11 +78,35 @@ for (const t of [
   assert(o.probs.sticker < base.probs.sticker, "boost lowers others");
 }
 
-// 7. Full-event simulation: generate demand-shaped spins, draw at each,
+// 7. Rolling-rate feedback: pacing follows the live 30-min spin count.
+{
+  const s = defaultState();
+  s.autoRate = true;
+  const now = at("2026-08-12", 13, 0); // full-strength block
+  s.spinLog = [];
+  assert(
+    effectiveSpinsPerBlock(s, now) === s.spinsPerBlock,
+    "no data => manual seed",
+  );
+  s.spinLog = Array.from({ length: 30 }, (_, i) => now - i * 1000);
+  assert(
+    Math.round(effectiveSpinsPerBlock(s, now)) === 30,
+    "full block uses rolling count directly",
+  );
+  const half = at("2026-08-12", 9, 15); // first-hour, half-demand block
+  s.spinLog = Array.from({ length: 20 }, (_, i) => half - i * 1000);
+  assert(
+    Math.round(effectiveSpinsPerBlock(s, half)) === 40,
+    "half block normalizes rolling count to peak-equivalent",
+  );
+}
+
+// 8. Full-event simulation: generate demand-shaped spins, draw at each,
 //    assert the priority items fully clear and everything is paced out.
-function simulate(seed: number, spinsPerBlock: number) {
+function simulate(seed: number, spinsPerBlock: number, autoRate = false) {
   let s = defaultState();
   s.spinsPerBlock = spinsPerBlock;
+  s.autoRate = autoRate;
   const rng = mulberry32(seed);
   const startTotal = ITEM_ORDER.filter((k) => k !== "wildcard").reduce(
     (a, k) => a + s.items[k].qty,
@@ -130,7 +153,7 @@ function simulate(seed: number, spinsPerBlock: number) {
   );
 }
 
-// 8. Under-attendance (few spins) still front-loads the priority items:
+// 9. Under-attendance (few spins) still front-loads the priority items:
 //    they should clear even when common prizes are left behind.
 {
   const { left, realLeft } = simulate(7, 12); // ~384 spins total
@@ -138,6 +161,17 @@ function simulate(seed: number, spinsPerBlock: number) {
     assert(left(k) === 0, `under-attendance: priority ${k} left ${left(k)}`);
   }
   console.log(`sim@12 (under-attendance): priorities cleared, ${realLeft} real left`);
+}
+
+// 10. Auto-rate mode: pacing driven by the live rolling rate still clears the
+//     priority items and keeps leftovers small.
+{
+  const { startTotal, realLeft, left } = simulate(42, 90, true);
+  for (const k of ["poleTrial", "hammock", "hoopTrial"] as ItemKey[]) {
+    assert(left(k) === 0, `auto-rate: priority ${k} left ${left(k)}`);
+  }
+  assert(realLeft <= 6, `auto-rate: too much left: ${realLeft}/${startTotal}`);
+  console.log(`sim@90 auto-rate: priorities cleared, ${realLeft} real left`);
 }
 
 console.log("all checks passed");

@@ -25,7 +25,7 @@ npm run build    # static site -> ./out
 | `lib/lucky-draw.check.ts` | A test that simulates the full 2-day event and asserts prizes clear. |
 | `lib/use-draw-state.ts` | Loads/saves state to `localStorage`. |
 | `components/wheel.tsx` | The Draw tab. Draws the SVG wheel, animates the spin. |
-| `components/control.tsx` | The Control tab. Stock, odds, boosts, live counters. |
+| `components/control.tsx` | The Control panel (behind the gear). Stock, odds, auto-pace, live counters. |
 | `app/page.tsx` | Tab switcher + header. Holds the state and the rehearsal clock. |
 | `app/globals.css` | Brand colors + fonts (copied from the aerial-sports app). |
 
@@ -38,7 +38,8 @@ npm run build    # static site -> ./out
     // ...one entry per prize, plus:
     wildcard:  { label: "?", qty: Infinity, priority: 1, boostPct: 0 },
   },
-  spinsPerBlock: 90,   // expected spins in a 30-min block at peak
+  spinsPerBlock: 90,   // seed / fallback spins per 30-min block
+  autoRate: true,      // pace from the live rolling 30-min spin rate
   spinLog: [ ...epochMs ],   // one timestamp per spin
   wildcardGiven: 0,    // how many "?" you've handed out
   eventDays: ["2026-08-12", "2026-08-13"],
@@ -61,7 +62,11 @@ All in `computeOdds(state, now)` in `lib/lucky-draw.ts`. Three steps.
 `remainingSpins(state, now)` walks every 30-minute block from `now` to 6pm on
 day 2 and adds up `spinsPerBlock` per block. The first and last hour of each day
 count as half (you said those are quieter). So at the start of the event this is
-roughly `2 days × 16 full-strength blocks × 90 ≈ 2,880` expected spins.
+roughly `2 days × 16 full-strength blocks × 90 ≈ 2,880` expected spins. In auto
+mode (the default) that `90` is replaced live by the actual number of spins in
+the last 30 minutes — normalized so a half-demand hour still projects a sensible
+peak — so pacing tracks real turnout instead of a guess. Until 5 spins are on
+the clock it uses the manual seed.
 
 **Step 2 — how often should each prize come up?**
 For each prize still in stock:
@@ -89,8 +94,9 @@ ever fall behind (more stock than spins left), `sum(pace)` goes over 1, `?` drop
 to 0, and every spin is a real prize until you catch up. It self-corrects — no
 timers, no scheduled jobs.
 
-**Where priority and boost come in.** They only change the split *between real
-prizes*, never how much `?` shows up. The weight for a real prize is:
+**Where priority comes in.** Priority (and a still-supported but now UI-less
+`boostPct`) only changes the split *between real prizes*, never how much `?`
+shows up. The weight for a real prize is:
 
 ```
 weight = qty × priority × (1 + boostPct/100)
@@ -125,21 +131,23 @@ click:
 
 So the visual is decoration; the result was decided before the wheel moved.
 
-## The Control tab
+## The Control panel
+
+Hidden behind the **gear icon** in the top-right corner, so it's off the
+event-facing wheel.
 
 - **Stock** — `+`/`−` or type a number. Changes `qty`, which changes odds live.
-- **Boost %** — type a number to bias one prize. When any boost is on, boosted
-  rows turn green, everything else turns amber (its odds dropped), and a banner
-  warns that rigging is active. (Brand palette has no green/amber, so those two
-  colors are defined in `globals.css` as `--boost` / `--reduced`.)
-- **★ priority** toggle — flips a prize between normal and higher priority.
-- **Live counters** — spins this block vs. target, estimated spins left, real
+- **★ clear first** toggle — flips a prize to higher priority so it empties out
+  earlier. This is the lever for pushing a specific prize. (The old manual
+  Boost % column was removed to keep the panel clean; `boostPct` still exists in
+  the engine if you ever want it back.)
+- **Auto-pace** checkbox — on by default; paces from the live rolling 30-min
+  rate. Turn it off to pin pacing to the fixed seed number instead.
+- **Live counters** — spins in the last 30 min, the per-block figure pacing is
+  actually using (and whether it came from the live rate or the seed), real
   prizes left, and `?` given vs. still needed.
-- **Spins per 30-min block** — the main dial. Default 90 is high (that's a spin
-  every 20 seconds for 9 hours). Watch the "spins this block" counter on the day
-  and lower it to match reality.
 - **Rehearsal clock** — because today is before the event, live odds would just
-  show 95% `?`. Set a fake date/time to preview how pacing behaves mid-event.
+  show ~95% `?`. Set a fake date/time to preview how pacing behaves mid-event.
 
 ## The one thing to calibrate
 
