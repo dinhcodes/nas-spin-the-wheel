@@ -1,0 +1,130 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-heading: var(--font-heading), 'Garamond', 'Georgia', 'Times New Roman',
+    serif;
+  --font-body: var(--font-body), 'Lato', 'Arial', sans-serif;
+  --font-sans: var(--font-body), 'Lato', 'Arial', sans-serif;
+
+  /* Brand palette (shared look with the NAS aerial-sports app) */
+  --color-venus: #a187a1;
+  --color-venus-light: #b99bb8;
+  --color-desert-sand: #ecc4ac;
+  --color-matterhorn: #4b343c;
+  --color-bison-hide: #c4aca4;
+  --color-warm-ivory: #fff8f2;
+
+  /* Rigging indicators (no green/amber in the brand palette, so added here) */
+  --color-boost: var(--boost);
+  --color-reduced: var(--reduced);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+}
+
+:root {
+  --background: #fff8f2;
+  --foreground: #4b343c;
+  --card: #fffdfb;
+  --card-foreground: #4b343c;
+  --primary: #a187a1;
+  --primary-foreground: #fff8f2;
+  --secondary: #ecc4ac;
+  --secondary-foreground: #4b343c;
+  --muted: #f3e7df;
+  --muted-foreground: #8a6f78;
+  --accent: #c4aca4;
+  --accent-foreground: #4b343c;
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: #e6d3ca;
+  --input: #e6d3ca;
+  --ring: #a187a1;
+  --boost: #5f8a5a;
+  --reduced: #c07a2c;
+  --radius: 1rem;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-body;
+  }
+}
+
+@layer utilities {
+  .bg-hero {
+    background: linear-gradient(135deg, #fff8f2 0%, #f3d6cf 35%, #dccbdf 100%);
+  }
+  .bg-celestial {
+    background: radial-gradient(
+      circle at top left,
+      #4b343c 0%,
+      #20151c 55%,
+      #120b10 100%
+    );
+  }
+  .bg-btn {
+    background: linear-gradient(135deg, #a187a1 0%, #b99bb8 50%, #ecc4ac 100%);
+  }
+  .font-heading {
+    font-family: var(--font-heading);
+  }
+}
+
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(-10vh) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(110vh) rotate(720deg);
+    opacity: 0;
+  }
+}
+
+@keyframes pop-in {
+  0% {
+    transform: scale(0.7);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-pop-in {
+  animation: pop-in 0.4s ease-out both;
+}

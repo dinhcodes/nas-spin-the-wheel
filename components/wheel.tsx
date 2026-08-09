@@ -1,0 +1,176 @@
+'use client'
+
+import { useRef, useState } from 'react'
+import {
+  computeOdds,
+  pickWinner,
+  ITEM_ORDER,
+  type ItemKey,
+  type State,
+} from '@/lib/lucky-draw'
+import { Confetti } from '@/components/confetti'
+
+// Equal-looking slices; the winner is decided by the pacing model, then the
+// wheel is animated to land on that slice.
+const SEG = 360 / ITEM_ORDER.length
+const SPIN_MS = 3500
+const TURNS = 5
+
+// Brand palette, alternating; "?" gets the dark plum so it reads as special.
+const FILLS = [
+  '#a187a1', // venus
+  '#ecc4ac', // desert-sand
+  '#c4aca4', // bison-hide
+  '#b99bb8', // venus-light
+  '#a187a1',
+  '#ecc4ac',
+  '#c4aca4',
+  '#4b343c', // matterhorn (wildcard)
+]
+
+const R = 96
+const C = 100
+
+function pointOnCircle(deg: number, radius = R) {
+  const rad = ((deg - 90) * Math.PI) / 180 // deg measured clockwise from top
+  return [C + radius * Math.cos(rad), C + radius * Math.sin(rad)]
+}
+
+function segmentPath(i: number) {
+  const [x1, y1] = pointOnCircle(i * SEG)
+  const [x2, y2] = pointOnCircle((i + 1) * SEG)
+  return `M ${C} ${C} L ${x1} ${y1} A ${R} ${R} 0 0 1 ${x2} ${y2} Z`
+}
+
+// Rotation (deg) that brings slice `index` under the top pointer, always
+// spinning forward at least TURNS full turns from `current`.
+function rotationFor(index: number, current: number) {
+  const targetMod = (360 - (index * SEG + SEG / 2)) % 360
+  const currentMod = ((current % 360) + 360) % 360
+  let delta = targetMod - currentMod
+  if (delta < 0) delta += 360
+  return current + TURNS * 360 + delta
+}
+
+export function Wheel({
+  state,
+  getNow,
+  onResult,
+}: {
+  state: State
+  getNow: () => number
+  onResult: (winner: ItemKey) => void
+}) {
+  const [rotation, setRotation] = useState(0)
+  const [spinning, setSpinning] = useState(false)
+  const [winner, setWinner] = useState<ItemKey | null>(null)
+  const pending = useRef<ItemKey | null>(null)
+
+  function spin() {
+    if (spinning) return
+    setWinner(null)
+    const odds = computeOdds(state, getNow())
+    const w = pickWinner(odds)
+    pending.current = w
+    setRotation((r) => rotationFor(ITEM_ORDER.indexOf(w), r))
+    setSpinning(true)
+  }
+
+  function onTransitionEnd() {
+    if (!spinning) return
+    setSpinning(false)
+    const w = pending.current
+    if (w) {
+      setWinner(w)
+      onResult(w) // decrement stock / bump wildcard counter in parent
+    }
+  }
+
+  const winnerItem = winner ? state.items[winner] : null
+
+  return (
+    <div className="flex flex-col items-center gap-8">
+      <div className="relative aspect-square w-full max-w-[520px]">
+        {/* pointer */}
+        <div className="absolute top-[-6px] left-1/2 z-20 -translate-x-1/2">
+          <div className="h-0 w-0 border-x-[16px] border-t-[26px] border-x-transparent border-t-matterhorn drop-shadow" />
+        </div>
+
+        <svg
+          viewBox="0 0 200 200"
+          className="h-full w-full drop-shadow-xl"
+          style={{
+            transform: `rotate(${rotation}deg)`,
+            transition: spinning
+              ? `transform ${SPIN_MS}ms cubic-bezier(0.1, 0.9, 0.2, 1)`
+              : 'none',
+          }}
+          onTransitionEnd={onTransitionEnd}
+        >
+          <circle cx={C} cy={C} r={R + 3} fill="#fffdfb" />
+          {ITEM_ORDER.map((key, i) => {
+            const [lx, ly] = pointOnCircle(i * SEG + SEG / 2, R * 0.62)
+            const label = state.items[key].label
+            const dark = FILLS[i] === '#4b343c'
+            return (
+              <g key={key}>
+                <path
+                  d={segmentPath(i)}
+                  fill={FILLS[i]}
+                  stroke="#fffdfb"
+                  strokeWidth={1.5}
+                />
+                <text
+                  x={lx}
+                  y={ly}
+                  fill={dark ? '#fff8f2' : '#4b343c'}
+                  fontSize={key === 'wildcard' ? 16 : 8}
+                  fontWeight={700}
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                  transform={`rotate(${i * SEG + SEG / 2} ${lx} ${ly})`}
+                >
+                  {key === 'wildcard' ? '?' : label}
+                </text>
+              </g>
+            )
+          })}
+          <circle cx={C} cy={C} r={16} fill="#fffdfb" stroke="#e6d3ca" />
+        </svg>
+      </div>
+
+      <button
+        onClick={spin}
+        disabled={spinning}
+        className="bg-btn rounded-full px-12 py-4 text-xl font-bold text-matterhorn shadow-lg transition-transform active:translate-y-px disabled:opacity-60"
+      >
+        {spinning ? 'Spinning…' : 'SPIN'}
+      </button>
+
+      {winner && (
+        <div
+          className="animate-pop-in fixed inset-0 z-40 flex items-center justify-center bg-matterhorn/40 p-6"
+          onClick={() => setWinner(null)}
+        >
+          <Confetti />
+          <div className="bg-card w-full max-w-md rounded-3xl p-10 text-center shadow-2xl">
+            <p className="text-muted-foreground text-sm tracking-widest uppercase">
+              Winner
+            </p>
+            <p className="font-heading text-primary mt-2 text-5xl font-bold">
+              {winner === 'wildcard' ? '🍬 ?' : winnerItem?.label}
+            </p>
+            {winner === 'wildcard' && (
+              <p className="text-muted-foreground mt-3 text-sm">
+                Hand out a candy or hair tinsel!
+              </p>
+            )}
+            <p className="text-muted-foreground mt-6 text-xs">
+              tap anywhere to continue
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
