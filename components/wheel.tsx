@@ -85,6 +85,9 @@ export function Wheel({
   return (
     <div className="flex flex-col items-center gap-8">
       <div className="relative aspect-square w-full max-w-[520px]">
+        {/* frosted glass disc behind the wheel */}
+        <div className="absolute -inset-3 rounded-full border border-white/25 bg-white/10 shadow-[0_10px_50px_rgba(0,0,0,0.45)] backdrop-blur-md" />
+
         {/* pointer */}
         <div className="absolute top-[-6px] left-1/2 z-20 -translate-x-1/2">
           <div className="h-0 w-0 border-x-[16px] border-t-[26px] border-x-transparent border-t-matterhorn drop-shadow" />
@@ -92,7 +95,7 @@ export function Wheel({
 
         <svg
           viewBox="0 0 200 200"
-          className="h-full w-full drop-shadow-xl"
+          className="relative h-full w-full drop-shadow-xl"
           style={{
             transform: `rotate(${rotation}deg)`,
             transition: spinning
@@ -140,12 +143,21 @@ export function Wheel({
           })}
           <circle cx={C} cy={C} r={16} fill="#fffdfb" stroke="#e6d3ca" />
         </svg>
+
+        {/* glass sheen — a fixed highlight that doesn't spin with the wheel */}
+        <div
+          className="pointer-events-none absolute inset-0 z-10 rounded-full"
+          style={{
+            background:
+              'radial-gradient(circle at 32% 22%, rgba(255,255,255,0.45), rgba(255,255,255,0) 46%)',
+          }}
+        />
       </div>
 
       <button
         onClick={spin}
         disabled={spinning}
-        className="bg-matterhorn text-warm-ivory hover:bg-matterhorn/90 rounded-full px-14 py-4 text-xl font-bold tracking-widest shadow-lg transition-all active:translate-y-px disabled:opacity-60"
+        className="bg-warm-ivory text-matterhorn rounded-full px-14 py-4 text-xl font-bold tracking-widest shadow-[0_0_40px_-4px_rgba(201,162,207,0.7)] transition-all hover:scale-[1.03] active:translate-y-px disabled:opacity-60"
       >
         {spinning ? 'Spinning…' : 'SPIN'}
       </button>

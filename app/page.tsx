@@ -6,6 +6,7 @@ import { useDrawState } from '@/lib/use-draw-state'
 import { applyDraw, type ItemKey } from '@/lib/lucky-draw'
 import { Wheel } from '@/components/wheel'
 import { Control } from '@/components/control'
+import { BlobBackground } from '@/components/blob-background'
 
 export default function Page() {
   const { state, setState, loaded } = useDrawState()
@@ -18,25 +19,28 @@ export default function Page() {
 
   if (!loaded) {
     return (
-      <main className="bg-hero flex min-h-screen items-center justify-center">
-        <p className="text-muted-foreground">Loading…</p>
+      <main className="flex min-h-screen items-center justify-center bg-[#150d1c]">
+        <BlobBackground />
+        <p className="text-warm-ivory/70">Loading…</p>
       </main>
     )
   }
 
   return (
-    <main className="bg-hero relative min-h-screen">
+    <main className="relative min-h-screen bg-[#150d1c]">
+      <BlobBackground />
+
       {/* hidden control, revealed by the corner gear */}
       <button
         onClick={() => setShowControl(true)}
         aria-label="Open controls"
-        className="text-muted-foreground hover:text-primary hover:border-primary/40 absolute top-4 right-4 z-30 flex size-10 items-center justify-center rounded-full border border-transparent bg-white/60 backdrop-blur transition-colors"
+        className="text-warm-ivory/80 absolute top-4 right-4 z-30 flex size-10 items-center justify-center rounded-full border border-white/20 bg-white/10 backdrop-blur transition-colors hover:bg-white/20"
       >
         <Settings className="size-5" />
       </button>
 
       <header className="mx-auto flex max-w-5xl flex-col items-center px-4 pt-10 pb-2">
-        <h1 className="font-heading text-primary text-4xl font-bold">
+        <h1 className="font-heading text-warm-ivory text-4xl font-bold drop-shadow">
           Spin the Wheel
         </h1>
       </header>
