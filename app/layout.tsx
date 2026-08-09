@@ -16,12 +16,8 @@ const lato = Lato({
 })
 
 export const metadata: Metadata = {
-  title: 'NAS Spin the Wheel',
-  description: 'Lucky-draw wheel for the NAS event.',
-  icons: {
-    icon: '/assets/logo.png',
-    apple: '/assets/logo.png',
-  },
+  title: 'Spin the Wheel',
+  description: 'Lucky-draw wheel for the event.',
 }
 
 export default function RootLayout({

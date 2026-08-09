@@ -34,7 +34,7 @@ export interface State {
   spinsPerBlock: number; // seed / fallback expected spins per 30-min block at peak
   autoRate: boolean; // drive pacing from the live rolling spin rate
   spinLog: number[]; // epoch-ms timestamps, one per spin
-  wildcardGiven: number; // how many "?" handed out (for restocking candies)
+  wildcardGiven: number; // how many "?" have been redeemed
   eventDays: string[]; // ["2026-08-12","2026-08-13"], local time
   startHour: number; // 9
   endHour: number; // 18 (exclusive)
@@ -54,6 +54,18 @@ export const ITEM_ORDER: ItemKey[] = [
 
 export const HIGHER_PRIORITY: ItemKey[] = ["hammock", "hoopTrial", "poleTrial"];
 
+// Display names live in code (never in stored state) so renames apply instantly.
+export const LABELS: Record<ItemKey, string> = {
+  poleCloth: "Pole Cloth",
+  gymBag: "Gym Bag",
+  hammock: "Hammock Trial",
+  hoopTrial: "Hoop Trial",
+  poleTrial: "Pole Trial",
+  keychain: "Keychain",
+  sticker: "Sticker",
+  wildcard: "?",
+};
+
 const BLOCK_MS = 30 * 60 * 1000;
 
 export function defaultState(): State {
@@ -65,16 +77,16 @@ export function defaultState(): State {
   });
   return {
     items: {
-      poleCloth: mk("Pole Cloth", 2),
-      gymBag: mk("Gym Bag", 3),
-      hammock: mk("Hammock Trial", 10, 2),
-      hoopTrial: mk("Hoop Trial", 10, 2),
-      poleTrial: mk("Pole Trial", 8, 2),
-      keychain: mk("Keychain", 45),
-      sticker: mk("Sticker", 50),
-      wildcard: mk("?", Infinity),
+      poleCloth: mk(LABELS.poleCloth, 2),
+      gymBag: mk(LABELS.gymBag, 3),
+      hammock: mk(LABELS.hammock, 10, 2),
+      hoopTrial: mk(LABELS.hoopTrial, 10, 2),
+      poleTrial: mk(LABELS.poleTrial, 8, 2),
+      keychain: mk(LABELS.keychain, 45),
+      sticker: mk(LABELS.sticker, 50),
+      wildcard: mk(LABELS.wildcard, Infinity),
     },
-    spinsPerBlock: 90,
+    spinsPerBlock: 8, // seed: ~256 spins across the event (tune to real footfall)
     autoRate: true,
     spinLog: [],
     wildcardGiven: 0,
@@ -147,6 +159,28 @@ export function remainingSpins(state: State, nowMs: number): number {
     }
   }
   return total;
+}
+
+// Sum of every block's demand weight across the whole event (32 for the default
+// two 9-6 days). Multiply by spinsPerBlock to get expected total spins.
+export function eventPeakBlocks(state: State): number {
+  let n = 0;
+  for (const _day of state.eventDays) {
+    for (let h = state.startHour; h < state.endHour; h++) {
+      n += blockWeight(state, h) * 2; // two 30-min blocks per hour
+    }
+  }
+  return n;
+}
+
+// The intuitive knob: total spins expected over the event (footfall).
+export function expectedTotalSpins(state: State): number {
+  return Math.round(eventPeakBlocks(state) * state.spinsPerBlock);
+}
+
+// Inverse: given a target total footfall, the seed spins-per-block it implies.
+export function spinsPerBlockForTotal(state: State, total: number): number {
+  return Math.max(1, total / eventPeakBlocks(state));
 }
 
 export interface Odds {

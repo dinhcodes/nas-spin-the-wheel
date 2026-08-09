@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import Image from 'next/image'
 import { Settings, X } from 'lucide-react'
 import { useDrawState } from '@/lib/use-draw-state'
 import { applyDraw, type ItemKey } from '@/lib/lucky-draw'
@@ -36,19 +35,10 @@ export default function Page() {
         <Settings className="size-5" />
       </button>
 
-      <header className="mx-auto flex max-w-5xl flex-col items-center gap-3 px-4 pt-10 pb-2">
-        <div className="flex items-center gap-3">
-          <Image
-            src="/assets/logo.png"
-            alt="NAS"
-            width={44}
-            height={44}
-            className="rounded-full"
-          />
-          <h1 className="font-heading text-primary text-3xl font-bold">
-            Spin the Wheel
-          </h1>
-        </div>
+      <header className="mx-auto flex max-w-5xl flex-col items-center px-4 pt-10 pb-2">
+        <h1 className="font-heading text-primary text-4xl font-bold">
+          Spin the Wheel
+        </h1>
       </header>
 
       <section className="mx-auto max-w-5xl px-4 pt-4 pb-16">

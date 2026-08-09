@@ -5,6 +5,7 @@ import {
   computeOdds,
   pickWinner,
   ITEM_ORDER,
+  LABELS,
   type ItemKey,
   type State,
 } from '@/lib/lucky-draw'
@@ -72,14 +73,13 @@ export function Wheel({
   function onTransitionEnd() {
     if (!spinning) return
     setSpinning(false)
-    const w = pending.current
-    if (w) {
-      setWinner(w)
-      onResult(w) // decrement stock / bump wildcard counter in parent
-    }
+    if (pending.current) setWinner(pending.current) // show modal; stock unchanged until Redeem
   }
 
-  const winnerItem = winner ? state.items[winner] : null
+  function redeem() {
+    if (winner) onResult(winner) // only now does stock change
+    setWinner(null)
+  }
 
   return (
     <div className="flex flex-col items-center gap-8">
@@ -103,7 +103,9 @@ export function Wheel({
           <circle cx={C} cy={C} r={R + 3} fill="#fffdfb" />
           {ITEM_ORDER.map((key, i) => {
             const [lx, ly] = pointOnCircle(i * SEG + SEG / 2, R * 0.62)
-            const label = state.items[key].label
+            const words =
+              key === 'wildcard' ? ['?'] : LABELS[key].split(' ')
+            const wild = key === 'wildcard'
             return (
               <g key={key}>
                 <path
@@ -116,13 +118,21 @@ export function Wheel({
                   x={lx}
                   y={ly}
                   fill="#4b343c"
-                  fontSize={key === 'wildcard' ? 16 : 8}
+                  fontSize={wild ? 16 : 7.5}
                   fontWeight={700}
                   textAnchor="middle"
                   dominantBaseline="middle"
                   transform={`rotate(${i * SEG + SEG / 2} ${lx} ${ly})`}
                 >
-                  {key === 'wildcard' ? '?' : label}
+                  {words.map((w, j) => (
+                    <tspan
+                      key={j}
+                      x={lx}
+                      dy={j === 0 ? -((words.length - 1) * 4) : 8}
+                    >
+                      {w}
+                    </tspan>
+                  ))}
                 </text>
               </g>
             )
@@ -140,25 +150,31 @@ export function Wheel({
       </button>
 
       {winner && (
-        <div
-          className="animate-pop-in fixed inset-0 z-40 flex items-center justify-center bg-white/50 p-6 backdrop-blur-sm"
-          onClick={() => setWinner(null)}
-        >
+        <div className="animate-pop-in fixed inset-0 z-40 flex items-center justify-center bg-white/50 p-6 backdrop-blur-sm">
           <Confetti />
           <div className="bg-card w-full max-w-md rounded-3xl p-10 text-center shadow-2xl">
             <p className="text-muted-foreground text-sm tracking-widest uppercase">
               Winner
             </p>
             <p className="font-heading text-primary mt-2 text-5xl font-bold">
-              {winner === 'wildcard' ? '🍬 ?' : winnerItem?.label}
+              {LABELS[winner]}
             </p>
-            {winner === 'wildcard' && (
-              <p className="text-muted-foreground mt-3 text-sm">
-                Hand out a candy or hair tinsel!
-              </p>
-            )}
-            <p className="text-muted-foreground mt-6 text-xs">
-              tap anywhere to continue
+            <div className="mt-8 flex gap-3">
+              <button
+                onClick={redeem}
+                className="bg-matterhorn text-warm-ivory hover:bg-matterhorn/90 flex-1 rounded-full px-6 py-3 font-bold shadow transition-colors"
+              >
+                Redeem
+              </button>
+              <button
+                onClick={() => setWinner(null)}
+                className="border-border text-muted-foreground hover:bg-muted flex-1 rounded-full border px-6 py-3 font-medium transition-colors"
+              >
+                Nevermind
+              </button>
+            </div>
+            <p className="text-muted-foreground mt-4 text-xs">
+              stock only changes when you Redeem
             </p>
           </div>
         </div>

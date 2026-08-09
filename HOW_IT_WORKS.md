@@ -3,7 +3,7 @@
 A prize wheel for a 2-day booth. The wheel looks fair (8 equal slices), but the
 winner is picked by code so the good prizes get spread out over both days
 instead of being gone in the first hour. Leftover spins hand out a `?`
-(candy / hair tinsel).
+(a generic consolation).
 
 Single-page Next.js app. No backend. All state is in the browser's
 `localStorage`. One operator, one laptop.
@@ -61,12 +61,13 @@ All in `computeOdds(state, now)` in `lib/lucky-draw.ts`. Three steps.
 **Step 1 — how many spins are left?**
 `remainingSpins(state, now)` walks every 30-minute block from `now` to 6pm on
 day 2 and adds up `spinsPerBlock` per block. The first and last hour of each day
-count as half (you said those are quieter). So at the start of the event this is
-roughly `2 days × 16 full-strength blocks × 90 ≈ 2,880` expected spins. In auto
-mode (the default) that `90` is replaced live by the actual number of spins in
-the last 30 minutes — normalized so a half-demand hour still projects a sensible
-peak — so pacing tracks real turnout instead of a guess. Until 5 spins are on
-the clock it uses the manual seed.
+count as half (you said those are quieter). The event has 32 "full-strength"
+blocks total, so `expectedTotalSpins = 32 × spinsPerBlock`. You set this in the
+UI as one intuitive number — **expected total spins** — and the code back-solves
+`spinsPerBlock` from it. In auto mode (the default) `spinsPerBlock` is replaced
+live by the actual number of spins in the last 30 minutes — normalized so a
+half-demand hour still projects a sensible peak — so pacing tracks real turnout
+instead of a guess. Until 5 spins are on the clock it uses your estimate.
 
 **Step 2 — how often should each prize come up?**
 For each prize still in stock:
@@ -86,13 +87,16 @@ Add up every prize's `pace`. Whatever probability is left over goes to `?`:
 P("?") = 1 − sum(pace)
 ```
 
-At the start there are only 128 real prizes but ~2,880 spins, so `sum(pace)` is
-tiny (~0.044) and `?` gets ~95%. That's expected — there aren't enough real
-prizes to give one on every spin, so most spins are candy. As prizes sit unclaimed
-and time runs down, `remainingSpins` shrinks, `pace` climbs, and `?` drops. If you
-ever fall behind (more stock than spins left), `sum(pace)` goes over 1, `?` drops
-to 0, and every spin is a real prize until you catch up. It self-corrects — no
-timers, no scheduled jobs.
+`?` is simply whatever probability the real prizes don't need. Its size is
+driven entirely by expected-spins vs. prizes: expect far more spins than prizes
+and `?` is high; expect spins ≈ prizes and `?` ≈ 0. Example: 128 prizes with
+~256 expected spins over the event → `sum(pace)` ≈ 0.5, so `?` ≈ 50% on average.
+(If you instead assumed ~2,880 spins, `?` would be ~95% — there just aren't
+enough prizes to give one on most spins.) As prizes sit unclaimed and time runs
+down, `remainingSpins` shrinks, `pace` climbs, and `?` drops. If you ever fall
+behind (more stock than spins left), `sum(pace)` goes over 1, `?` drops to 0, and
+every spin is a real prize until you catch up. It self-corrects — no timers, no
+scheduled jobs.
 
 **Where priority comes in.** Priority (and a still-supported but now UI-less
 `boostPct`) only changes the split *between real prizes*, never how much `?`
@@ -126,8 +130,10 @@ click:
 2. The wheel spins to land on that winner's slice — 5 full turns plus the offset
    to the slice, over exactly 3.5s, with a fast-start / slow-stop easing curve
    (`cubic-bezier(0.1, 0.9, 0.2, 1)`).
-3. When the CSS transition ends, it shows the winner card + confetti and calls
-   `applyDraw` to drop the stock by one (or bump the `?` counter).
+3. When the CSS transition ends, it shows the winner card + confetti with two
+   buttons. **Redeem** calls `applyDraw` (drops the stock by one, or bumps the
+   `?` counter) and logs the spin; **Nevermind** closes and changes nothing — so
+   stock only moves when a prize is actually handed over.
 
 So the visual is decoration; the result was decided before the wheel moved.
 
@@ -146,16 +152,17 @@ event-facing wheel.
 - **Live counters** — spins in the last 30 min, the per-block figure pacing is
   actually using (and whether it came from the live rate or the seed), and real
   prizes left.
-- **Rehearsal clock** — because today is before the event, live odds would just
-  show ~95% `?`. Set a fake date/time to preview how pacing behaves mid-event.
+- **Rehearsal clock** — because today is before the event, set a fake date/time
+  to preview how pacing behaves mid-event.
 
 ## The one thing to calibrate
 
-You have 128 real prizes and the default assumes ~2,880 spins. That's ~22 spins
-per prize, so most spins are `?`, and you'd hand out ~2,750 candies/tinsels over
-two days. If that candy count is wrong, drop `spinsPerBlock` until the numbers
-look right — the Control tab shows "`?` needed" so you can see it. Nothing else
-needs to change; the math adapts to whatever number you set.
+Set **expected total spins** to your realistic footfall over the two days. That
+single number sets the `?` rate: if it's close to your prize count (128), almost
+every spin gives a real prize and `?` is rare; if it's much larger, `?` fills the
+gap so prizes last. The panel shows the resulting baseline `?` % as you type.
+Nothing else needs to change — the math adapts to whatever number you set, and in
+auto mode it re-tunes itself from the live spin rate during the event.
 
 ## Deploying (later)
 

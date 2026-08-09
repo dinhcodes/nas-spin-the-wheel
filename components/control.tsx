@@ -6,8 +6,11 @@ import {
   rollingSpins,
   effectiveSpinsPerBlock,
   currentBlockWeight,
+  expectedTotalSpins,
+  spinsPerBlockForTotal,
   defaultState,
   ITEM_ORDER,
+  LABELS,
   type ItemKey,
   type State,
 } from '@/lib/lucky-draw'
@@ -38,6 +41,12 @@ export function Control({
   const rolling = rollingSpins(state, now)
   const effective = Math.round(effectiveSpinsPerBlock(state, now))
   const usingLive = state.autoRate && currentBlockWeight(state, now) > 0 && rolling >= 5
+  const expectedTotal = expectedTotalSpins(state)
+  const seedPerBlock = Math.round(state.spinsPerBlock)
+  const baselineWild =
+    expectedTotal > 0
+      ? Math.max(0, Math.round((1 - realLeft / expectedTotal) * 100))
+      : 0
 
   const setItem = (key: ItemKey, patch: Partial<State['items'][ItemKey]>) =>
     setState((s) => ({
@@ -58,9 +67,33 @@ export function Control({
         <Stat label="Real prizes left" value={realLeft.toString()} />
       </div>
 
-      {/* pace source */}
-      <div className="bg-card flex flex-col gap-3 rounded-2xl border p-4">
-        <label className="flex items-center gap-3">
+      {/* how many spins to expect — the dial that controls the ? rate */}
+      <div className="bg-card flex flex-col gap-4 rounded-2xl border p-4">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="font-medium">Expected total spins (both days)</p>
+            <p className="text-muted-foreground text-sm">
+              ≈ {seedPerBlock}/30-min block · {realLeft} prizes to give → baseline
+              “?” ≈ {baselineWild}%
+            </p>
+          </div>
+          <input
+            type="number"
+            min={1}
+            value={expectedTotal}
+            onChange={(e) =>
+              setState((s) => ({
+                ...s,
+                spinsPerBlock: spinsPerBlockForTotal(
+                  s,
+                  Math.max(1, Number(e.target.value) || 1),
+                ),
+              }))
+            }
+            className="bg-background w-28 rounded-lg border px-3 py-2 text-right text-lg font-semibold"
+          />
+        </div>
+        <label className="flex items-center gap-3 border-t pt-3">
           <input
             type="checkbox"
             checked={state.autoRate}
@@ -69,34 +102,11 @@ export function Control({
             }
             className="size-4"
           />
-          <span className="font-medium">
-            Auto-pace from the live rolling 30-min spin rate
+          <span className="text-sm">
+            Auto-adjust from the live rolling 30-min rate once 5+ spins are counted
+            (the number above is the starting estimate)
           </span>
         </label>
-        <div className="flex items-center justify-between gap-4">
-          <p className="text-muted-foreground text-sm">
-            {state.autoRate
-              ? 'Uses the last 30 min of spins; the number below is the fallback until enough spins are counted.'
-              : 'Auto off — pacing uses this fixed number.'}
-          </p>
-          <div className="flex items-center gap-2">
-            <span className="text-muted-foreground text-sm whitespace-nowrap">
-              Seed / block
-            </span>
-            <input
-              type="number"
-              min={1}
-              value={state.spinsPerBlock}
-              onChange={(e) =>
-                setState((s) => ({
-                  ...s,
-                  spinsPerBlock: Math.max(1, Number(e.target.value) || 1),
-                }))
-              }
-              className="bg-background w-20 rounded-lg border px-3 py-2 text-right text-lg font-semibold"
-            />
-          </div>
-        </div>
       </div>
 
       {/* items */}
@@ -120,7 +130,7 @@ export function Control({
               )}
             >
               <div className="flex items-center gap-2">
-                <span className="font-medium">{it.label}</span>
+                <span className="font-medium">{LABELS[key]}</span>
                 {!isWild && (
                   <button
                     onClick={() =>

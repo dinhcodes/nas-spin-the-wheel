@@ -23,10 +23,6 @@ export function useDrawState() {
           items: { ...base.items, ...(parsed.items ?? {}) },
         }
         next.items.wildcard.qty = Infinity // never persisted correctly (JSON drops it)
-        // Labels are code-owned config, not user data — always take the latest.
-        for (const k of Object.keys(base.items) as (keyof State['items'])[]) {
-          if (next.items[k]) next.items[k].label = base.items[k].label
-        }
         setState(next)
       }
     } catch {

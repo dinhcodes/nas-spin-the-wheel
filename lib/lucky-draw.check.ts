@@ -39,9 +39,11 @@ for (const t of [
   assert(Math.abs(sum(ITEM_ORDER.map((k) => o.probs[k])) - 1) < 1e-9, "sum=1");
 }
 
-// 2. Early on (128 prizes vs ~2880 spins) the "?" wildcard dominates.
+// 2. When spins vastly outnumber prizes, the "?" wildcard dominates.
 {
-  const o = computeOdds(defaultState(), at("2026-08-12", 9, 15));
+  const s = defaultState();
+  s.spinsPerBlock = 90; // ~2880 spins vs 128 prizes
+  const o = computeOdds(s, at("2026-08-12", 9, 15));
   assert(o.probs.wildcard > 0.8, `early wild high, got ${o.probs.wildcard}`);
 }
 
