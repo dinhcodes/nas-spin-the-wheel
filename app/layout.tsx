@@ -16,7 +16,7 @@ const lato = Lato({
 })
 
 export const metadata: Metadata = {
-  title: 'Spin the Wheel',
+  title: 'NAS wheel',
   description: 'Lucky-draw wheel for the event.',
 }
 
