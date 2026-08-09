@@ -43,8 +43,7 @@ npm run build    # static site -> ./out
   spinLog: [ ...epochMs ],   // one timestamp per spin
   wildcardGiven: 0,    // how many "?" have been redeemed
   eventDays: ["2026-08-12", "2026-08-13"],
-  startHour: 9, endHour: 18,
-  halfDemandFirstLastHour: true,
+  startHour: 10, endHour: 18,
 }
 ```
 
@@ -63,14 +62,14 @@ All in `computeOdds(state, now)` in `lib/lucky-draw.ts`. Three steps.
 
 **Step 1 — how many spins are left?**
 `remainingSpins(state, now)` walks every 30-minute block from `now` to 6pm on
-day 2 and adds up `spinsPerBlock` per block. The first and last hour of each day
-count as half (you said those are quieter). The event has 32 "full-strength"
-blocks total, so `expectedTotalSpins = 32 × spinsPerBlock`. You set this in the
-UI as one intuitive number — **expected total spins** — and the code back-solves
-`spinsPerBlock` from it. In auto mode (the default) `spinsPerBlock` is replaced
-live by the actual number of spins in the last 30 minutes — normalized so a
-half-demand hour still projects a sensible peak — so pacing tracks real turnout
-instead of a guess. Until 5 spins are on the clock it uses your estimate.
+day 2 and adds up `spinsPerBlock` per block. The event runs 10am–6pm on both
+days = 16 blocks/day, 32 blocks total, so `expectedTotalSpins = 32 ×
+spinsPerBlock`. You set this in the UI as one intuitive number — **expected total
+spins** — and the code back-solves `spinsPerBlock` from it. In auto mode (the
+default) `spinsPerBlock` is replaced live by the actual number of spins in the
+last 30 minutes, so pacing tracks real turnout instead of a guess. Until 5 spins
+are on the clock it uses your estimate. Every block counts equally — the event
+runs 10–6 both days with no busier/quieter weighting.
 
 **Step 2 — how often should each prize come up?**
 For each prize still in stock:

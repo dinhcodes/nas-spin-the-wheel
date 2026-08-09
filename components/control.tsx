@@ -5,7 +5,7 @@ import {
   computeOdds,
   rollingSpins,
   effectiveSpinsPerBlock,
-  currentBlockWeight,
+  inEvent,
   expectedTotalSpins,
   spinsPerBlockForTotal,
   defaultState,
@@ -40,7 +40,7 @@ export function Control({
   )
   const rolling = rollingSpins(state, now)
   const effective = Math.round(effectiveSpinsPerBlock(state, now))
-  const usingLive = state.autoRate && currentBlockWeight(state, now) > 0 && rolling >= 5
+  const usingLive = state.autoRate && inEvent(state, now) && rolling >= 5
   const expectedTotal = expectedTotalSpins(state)
   const seedPerBlock = Math.round(state.spinsPerBlock)
   const baselineWild =

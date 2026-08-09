@@ -23,6 +23,10 @@ export function useDrawState() {
           items: { ...base.items, ...(parsed.items ?? {}) },
         }
         next.items.wildcard.qty = Infinity // never persisted correctly (JSON drops it)
+        // Event schedule is code config, not operator data — always take the latest.
+        next.eventDays = base.eventDays
+        next.startHour = base.startHour
+        next.endHour = base.endHour
         setState(next)
       }
     } catch {

@@ -36,9 +36,8 @@ export interface State {
   spinLog: number[]; // epoch-ms timestamps, one per spin
   wildcardGiven: number; // how many "?" have been redeemed
   eventDays: string[]; // ["2026-08-12","2026-08-13"], local time
-  startHour: number; // 9
+  startHour: number; // 10
   endHour: number; // 18 (exclusive)
-  halfDemandFirstLastHour: boolean;
 }
 
 export const ITEM_ORDER: ItemKey[] = [
@@ -107,33 +106,24 @@ export function defaultState(): State {
     spinLog: [],
     wildcardGiven: 0,
     eventDays: ["2026-08-12", "2026-08-13"],
-    startHour: 9,
+    startHour: 10,
     endHour: 18,
-    halfDemandFirstLastHour: true,
   };
-}
-
-// Weight of a single 30-min block: 0.5 in the first & last hour of a day.
-function blockWeight(state: State, hour: number): number {
-  if (!state.halfDemandFirstLastHour) return 1;
-  const firstHour = hour < state.startHour + 1;
-  const lastHour = hour >= state.endHour - 1;
-  return firstHour || lastHour ? 0.5 : 1;
 }
 
 const MIN_ROLLING_SAMPLE = 5; // need at least this many spins before trusting live rate
 
-// Demand weight of the block containing `now`; 0 when outside event hours.
-export function currentBlockWeight(state: State, nowMs: number): number {
+// Whether `now` falls inside the event's open hours.
+export function inEvent(state: State, nowMs: number): boolean {
   const d = new Date(nowMs);
   const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
     2,
     "0",
   )}-${String(d.getDate()).padStart(2, "0")}`;
   const h = d.getHours();
-  if (!state.eventDays.includes(key) || h < state.startHour || h >= state.endHour)
-    return 0;
-  return blockWeight(state, h);
+  return (
+    state.eventDays.includes(key) && h >= state.startHour && h < state.endHour
+  );
 }
 
 // Spins recorded in the rolling 30-min window ending at `now`.
@@ -142,14 +132,13 @@ export function rollingSpins(state: State, nowMs: number): number {
 }
 
 // The spins-per-block figure pacing actually uses. In auto mode this is the live
-// rolling rate normalized to a full-strength block (so a half-demand hour still
-// projects a sensible peak); it falls back to the manual seed until enough spins
+// rolling 30-min spin count; it falls back to the manual seed until enough spins
 // have been observed, or whenever auto is off / we're outside event hours.
 export function effectiveSpinsPerBlock(state: State, nowMs: number): number {
   if (!state.autoRate) return state.spinsPerBlock;
-  const w = currentBlockWeight(state, nowMs);
   const rolling = rollingSpins(state, nowMs);
-  if (w > 0 && rolling >= MIN_ROLLING_SAMPLE) return Math.max(1, rolling / w);
+  if (inEvent(state, nowMs) && rolling >= MIN_ROLLING_SAMPLE)
+    return Math.max(1, rolling);
   return state.spinsPerBlock;
 }
 
@@ -165,11 +154,10 @@ export function remainingSpins(state: State, nowMs: number): number {
         const start = new Date(y, m - 1, d, h, min).getTime();
         const end = start + BLOCK_MS;
         if (end <= nowMs) continue; // block fully in the past
-        const w = blockWeight(state, h) * peak;
         if (start >= nowMs) {
-          total += w; // fully in the future
+          total += peak; // fully in the future
         } else {
-          total += w * ((end - nowMs) / BLOCK_MS); // straddles now
+          total += peak * ((end - nowMs) / BLOCK_MS); // straddles now
         }
       }
     }
@@ -177,16 +165,10 @@ export function remainingSpins(state: State, nowMs: number): number {
   return total;
 }
 
-// Sum of every block's demand weight across the whole event (32 for the default
-// two 9-6 days). Multiply by spinsPerBlock to get expected total spins.
+// Number of 30-min blocks across the whole event (32 for two 10-6 days).
+// Multiply by spinsPerBlock to get expected total spins.
 export function eventPeakBlocks(state: State): number {
-  let n = 0;
-  for (const _day of state.eventDays) {
-    for (let h = state.startHour; h < state.endHour; h++) {
-      n += blockWeight(state, h) * 2; // two 30-min blocks per hour
-    }
-  }
-  return n;
+  return state.eventDays.length * (state.endHour - state.startHour) * 2;
 }
 
 // The intuitive knob: total spins expected over the event (footfall).

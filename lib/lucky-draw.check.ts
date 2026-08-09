@@ -93,13 +93,14 @@ for (const t of [
   s.spinLog = Array.from({ length: 30 }, (_, i) => now - i * 1000);
   assert(
     Math.round(effectiveSpinsPerBlock(s, now)) === 30,
-    "full block uses rolling count directly",
+    "in-event rolling count is used directly",
   );
-  const half = at("2026-08-12", 9, 15); // first-hour, half-demand block
-  s.spinLog = Array.from({ length: 20 }, (_, i) => half - i * 1000);
+  // Outside event hours it ignores the rolling count and uses the seed.
+  const before = at("2026-08-12", 8, 0);
+  s.spinLog = Array.from({ length: 30 }, (_, i) => before - i * 1000);
   assert(
-    Math.round(effectiveSpinsPerBlock(s, half)) === 40,
-    "half block normalizes rolling count to peak-equivalent",
+    effectiveSpinsPerBlock(s, before) === s.spinsPerBlock,
+    "outside event => manual seed",
   );
 }
 
@@ -118,8 +119,7 @@ function simulate(seed: number, spinsPerBlock: number, autoRate = false) {
   for (const day of s.eventDays) {
     for (let h = s.startHour; h < s.endHour; h++) {
       for (const min of [0, 30]) {
-        const half = h < s.startHour + 1 || h >= s.endHour - 1;
-        const n = Math.round(spinsPerBlock * (half ? 0.5 : 1));
+        const n = spinsPerBlock;
         for (let i = 0; i < n; i++) {
           const now = at(day, h, min) + Math.floor((i / n) * 30 * 60 * 1000);
           const o = computeOdds(s, now);
