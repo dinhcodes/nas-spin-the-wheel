@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import {
   computeOdds,
-  remainingSpins,
   rollingSpins,
   effectiveSpinsPerBlock,
   currentBlockWeight,
@@ -32,12 +31,10 @@ export function Control({
 
   const now = getNow()
   const odds = computeOdds(state, now)
-  const remaining = remainingSpins(state, now)
   const realLeft = ITEM_ORDER.filter((k) => k !== 'wildcard').reduce(
     (a, k) => a + state.items[k].qty,
     0,
   )
-  const wildcardsNeeded = Math.max(0, Math.round(remaining - realLeft))
   const rolling = rollingSpins(state, now)
   const effective = Math.round(effectiveSpinsPerBlock(state, now))
   const usingLive = state.autoRate && currentBlockWeight(state, now) > 0 && rolling >= 5
@@ -51,7 +48,7 @@ export function Control({
   return (
     <div className="flex w-full flex-col gap-6">
       {/* live stats */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-3 gap-3">
         <Stat label="Spins / 30 min (live)" value={rolling.toString()} />
         <Stat
           label="Pacing at / block"
@@ -59,10 +56,6 @@ export function Control({
           hint={usingLive ? 'from live rate' : 'from seed'}
         />
         <Stat label="Real prizes left" value={realLeft.toString()} />
-        <Stat
-          label="? given / needed"
-          value={`${state.wildcardGiven} / ~${wildcardsNeeded}`}
-        />
       </div>
 
       {/* pace source */}

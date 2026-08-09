@@ -67,7 +67,7 @@ export function defaultState(): State {
     items: {
       poleCloth: mk("Pole Cloth", 2),
       gymBag: mk("Gym Bag", 3),
-      hammock: mk("Hammock", 10, 2),
+      hammock: mk("Hammock Trial", 10, 2),
       hoopTrial: mk("Hoop Trial", 10, 2),
       poleTrial: mk("Pole Trial", 8, 2),
       keychain: mk("Keychain", 45),

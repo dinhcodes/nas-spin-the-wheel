@@ -144,8 +144,8 @@ event-facing wheel.
 - **Auto-pace** checkbox — on by default; paces from the live rolling 30-min
   rate. Turn it off to pin pacing to the fixed seed number instead.
 - **Live counters** — spins in the last 30 min, the per-block figure pacing is
-  actually using (and whether it came from the live rate or the seed), real
-  prizes left, and `?` given vs. still needed.
+  actually using (and whether it came from the live rate or the seed), and real
+  prizes left.
 - **Rehearsal clock** — because today is before the event, live odds would just
   show ~95% `?`. Set a fake date/time to preview how pacing behaves mid-event.
 

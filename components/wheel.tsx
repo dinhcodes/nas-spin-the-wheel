@@ -134,7 +134,7 @@ export function Wheel({
       <button
         onClick={spin}
         disabled={spinning}
-        className="bg-btn rounded-full px-12 py-4 text-xl font-bold text-matterhorn shadow-lg transition-transform active:translate-y-px disabled:opacity-60"
+        className="bg-matterhorn text-warm-ivory hover:bg-matterhorn/90 rounded-full px-14 py-4 text-xl font-bold tracking-widest shadow-lg transition-all active:translate-y-px disabled:opacity-60"
       >
         {spinning ? 'Spinning…' : 'SPIN'}
       </button>
