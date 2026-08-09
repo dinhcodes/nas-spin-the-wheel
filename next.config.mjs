@@ -7,6 +7,9 @@ const nextConfig = {
   output: 'export',
   basePath: basePath || undefined,
   assetPrefix: basePath ? `${basePath}/` : undefined,
+  env: {
+    NEXT_PUBLIC_BASE_PATH: basePath, // so raw <img> src can be prefixed at runtime
+  },
   images: {
     unoptimized: true,
   },

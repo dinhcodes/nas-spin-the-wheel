@@ -16,6 +16,7 @@ export default function Page() {
   // before the real event. null => use the real clock.
   const [previewNow, setPreviewNow] = useState<number | null>(null)
   const getNow = () => previewNow ?? Date.now()
+  const qrSrc = `${process.env.NEXT_PUBLIC_BASE_PATH ?? ''}/qr-code-to-play.svg`
 
   if (!loaded) {
     return (
@@ -52,6 +53,17 @@ export default function Page() {
           onResult={(w: ItemKey) => setState((s) => applyDraw(s, w, getNow()))}
         />
       </section>
+
+      {/* QR to play — for big-screen viewers to scan; the wheel stays centered */}
+      <aside className="fixed top-1/2 right-8 z-20 hidden -translate-y-1/2 flex-col items-center gap-3 lg:flex">
+        <div className="rounded-2xl bg-white p-4 shadow-2xl">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={qrSrc} alt="Scan to spin the wheel" className="size-[172px]" />
+        </div>
+        <p className="font-heading text-warm-ivory text-lg font-semibold drop-shadow">
+          Scan to spin the wheel
+        </p>
+      </aside>
 
       {showControl && (
         <div className="bg-hero fixed inset-0 z-40 overflow-y-auto">
