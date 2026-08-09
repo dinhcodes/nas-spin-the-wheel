@@ -144,12 +144,12 @@ export function Wheel({
           <circle cx={C} cy={C} r={16} fill="#fffdfb" stroke="#e6d3ca" />
         </svg>
 
-        {/* glass sheen — a fixed highlight that doesn't spin with the wheel */}
+        {/* subtle glass rim highlight — thin arc only, kept off the labels */}
         <div
           className="pointer-events-none absolute inset-0 z-10 rounded-full"
           style={{
             background:
-              'radial-gradient(circle at 32% 22%, rgba(255,255,255,0.45), rgba(255,255,255,0) 46%)',
+              'radial-gradient(circle at 50% 0%, rgba(255,255,255,0.25), rgba(255,255,255,0) 18%)',
           }}
         />
       </div>

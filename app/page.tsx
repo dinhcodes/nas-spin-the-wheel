@@ -21,7 +21,7 @@ export default function Page() {
     return (
       <main className="flex min-h-screen items-center justify-center">
         <BlobBackground />
-        <p className="text-warm-ivory/70">Loading…</p>
+        <p className="relative z-10 text-warm-ivory/70">Loading…</p>
       </main>
     )
   }
@@ -39,13 +39,13 @@ export default function Page() {
         <Settings className="size-5" />
       </button>
 
-      <header className="mx-auto flex max-w-5xl flex-col items-center px-4 pt-10 pb-2">
+      <header className="relative z-10 mx-auto flex max-w-5xl flex-col items-center px-4 pt-10 pb-2">
         <h1 className="font-heading text-warm-ivory text-4xl font-bold drop-shadow">
           Spin the Wheel
         </h1>
       </header>
 
-      <section className="mx-auto max-w-5xl px-4 pt-4 pb-16">
+      <section className="relative z-10 mx-auto max-w-5xl px-4 pt-4 pb-16">
         <Wheel
           state={state}
           getNow={getNow}
