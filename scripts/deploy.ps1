@@ -3,6 +3,8 @@
 # Always does a CLEAN full build so a stale Next cache can't ship an old bundle,
 # and never pipes the build through Select-Object -First (which kills it early).
 $ErrorActionPreference = 'Stop'
+# Next writes deprecation warnings to stderr; don't let that abort the build.
+$PSNativeCommandUseErrorActionPreference = $false
 $root = Split-Path $PSScriptRoot -Parent
 Set-Location $root
 
