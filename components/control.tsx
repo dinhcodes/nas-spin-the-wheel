@@ -60,7 +60,7 @@ export function Control({
       <div className="grid grid-cols-3 gap-3">
         <Stat label="Spins / 30 min (live)" value={rolling.toString()} />
         <Stat
-          label="Pacing at / block"
+          label="Pacing at / 30-min block"
           value={effective.toString()}
           hint={usingLive ? 'from live rate' : 'from seed'}
         />
@@ -73,8 +73,7 @@ export function Control({
           <div>
             <p className="font-medium">Expected total spins (both days)</p>
             <p className="text-muted-foreground text-sm">
-              ≈ {seedPerBlock}/30-min block · {realLeft} prizes to give → baseline
-              “?” ≈ {baselineWild}%
+              This means: {baselineWild}% won't win anything valuable (aka: they get the ? prize)
             </p>
           </div>
           <input
@@ -103,8 +102,7 @@ export function Control({
             className="size-4"
           />
           <span className="text-sm">
-            Auto-adjust from the live rolling 30-min rate once 5+ spins are counted
-            (the number above is the starting estimate)
+            Auto-adjust from the live rolling 30-min rate
           </span>
         </label>
       </div>

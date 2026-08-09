@@ -174,7 +174,7 @@ export function Wheel({
               </button>
             </div>
             <p className="text-muted-foreground mt-4 text-xs">
-              stock only changes when you Redeem
+              yipee! congrats.
             </p>
           </div>
         </div>

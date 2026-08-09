@@ -26,8 +26,8 @@ npm run build    # static site -> ./out
 | `lib/use-draw-state.ts` | Loads/saves state to `localStorage`. |
 | `components/wheel.tsx` | The Draw tab. Draws the SVG wheel, animates the spin. |
 | `components/control.tsx` | The Control panel (behind the gear). Stock, odds, auto-pace, live counters. |
-| `app/page.tsx` | Tab switcher + header. Holds the state and the rehearsal clock. |
-| `app/globals.css` | Brand colors + fonts (copied from the aerial-sports app). |
+| `app/page.tsx` | Header + state. Owns the gear-toggled control panel and the rehearsal clock. |
+| `app/globals.css` | Brand colors + fonts. |
 
 ## The data (one object in localStorage)
 
@@ -38,10 +38,10 @@ npm run build    # static site -> ./out
     // ...one entry per prize, plus:
     wildcard:  { label: "?", qty: Infinity, priority: 1, boostPct: 0 },
   },
-  spinsPerBlock: 90,   // seed / fallback spins per 30-min block
+  spinsPerBlock: 8,    // seed per 30-min block (set via "expected total spins")
   autoRate: true,      // pace from the live rolling 30-min spin rate
   spinLog: [ ...epochMs ],   // one timestamp per spin
-  wildcardGiven: 0,    // how many "?" you've handed out
+  wildcardGiven: 0,    // how many "?" have been redeemed
   eventDays: ["2026-08-12", "2026-08-13"],
   startHour: 9, endHour: 18,
   halfDemandFirstLastHour: true,
@@ -51,8 +51,11 @@ npm run build    # static site -> ./out
 - `qty` — stock left. Hits 0 → the item stops appearing (same as the old Python
   `quantity <= 0` skip).
 - `priority` — used directly as a weight multiplier. `1` = normal, `2` = clear
-  it faster. Hammock, Hoop Trial, Pole Trial are `2`.
-- `boostPct` — manual override from the Control tab. `50` means ×1.5.
+  it faster. Hammock Trial, Hoop Trial, Pole Trial are `2`.
+- `boostPct` — engine-only weight multiplier (`50` = ×1.5). No UI — the ★ priority
+  toggle is the operator's lever now.
+- Display names are **not** read from the stored `label`; they come from `LABELS`
+  in `lib/lucky-draw.ts`, so renames apply instantly even over old saved state.
 
 ## The algorithm (this is the important part)
 
@@ -77,8 +80,8 @@ pace = qty / remainingSpins
 ```
 
 That's the probability this prize should be drawn on the next spin so its stock
-runs out exactly at the end. Example: 8 Pole Trials with 2,880 spins left →
-`8/2880 = 0.0028`, about 1 in every 360 spins.
+runs out exactly at the end. Example: 8 Pole Trials with ~250 spins left →
+`8/250 = 0.032`, about 1 in every 31 spins.
 
 **Step 3 — the `?` soaks up whatever's left.**
 Add up every prize's `pace`. Whatever probability is left over goes to `?`:
@@ -116,10 +119,12 @@ so it clears earlier. That's why the three trial prizes empty out first.
 ```
 sim@90: cleared 128/128 real prizes, 2752 wildcards handed out, 0 left over
 sim@12 (under-attendance): priorities cleared, 0 real left
+sim@90 auto-rate: priorities cleared, 0 real left
 ```
 
-So at the planned rate everything clears, and even if turnout is a third of
-expected, the priority prizes still all go out.
+So at the planned rate everything clears, at a much lower turnout the priority
+prizes still all go out, and it holds up whether pacing is fixed or auto-tuned
+from the live spin rate.
 
 ## The wheel (Draw tab)
 
@@ -143,15 +148,17 @@ Hidden behind the **gear icon** in the top-right corner, so it's off the
 event-facing wheel.
 
 - **Stock** — `+`/`−` or type a number. Changes `qty`, which changes odds live.
+- **Expected total spins** — the main dial (footfall over both days). It sets the
+  baseline `?` rate, shown right next to the field as you type.
 - **★ clear first** toggle — flips a prize to higher priority so it empties out
   earlier. This is the lever for pushing a specific prize. (The old manual
   Boost % column was removed to keep the panel clean; `boostPct` still exists in
   the engine if you ever want it back.)
 - **Auto-pace** checkbox — on by default; paces from the live rolling 30-min
-  rate. Turn it off to pin pacing to the fixed seed number instead.
+  rate. Turn it off to pace purely from the expected-total estimate.
 - **Live counters** — spins in the last 30 min, the per-block figure pacing is
-  actually using (and whether it came from the live rate or the seed), and real
-  prizes left.
+  actually using (and whether it came from the live rate or the estimate), and
+  real prizes left.
 - **Rehearsal clock** — because today is before the event, set a fake date/time
   to preview how pacing behaves mid-event.
 
