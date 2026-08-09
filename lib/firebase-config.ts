@@ -1,17 +1,18 @@
-// Paste your Firebase web-app config here (Firebase console →
-// Project settings → General → "Your apps" → SDK setup and configuration).
+// Firebase web-app config (client-side, safe to commit — security is via the
+// Realtime Database rules, not by hiding these). See FIREBASE_SETUP.md.
 //
-// This is a CLIENT config and is meant to be public — security is enforced by
-// the Realtime Database rules, not by hiding these values. See FIREBASE_SETUP.md.
-//
-// Until `databaseURL` is filled in, the app runs in localStorage-only mode
-// (no cloud sync), so nothing breaks before you set Firebase up.
+// NOTE: `databaseURL` is still blank. It only exists once you create the
+// Realtime Database (Build → Realtime Database → Create). Grab the URL shown at
+// the top of that page (ends in .firebasedatabase.app or .firebaseio.com) and
+// paste it below — that's what turns cloud sync on.
 export const firebaseConfig = {
-  apiKey: '',
-  authDomain: '',
-  databaseURL: '', // e.g. https://nas-wheel-default-rtdb.asia-southeast1.firebasedatabase.app
-  projectId: '',
-  appId: '',
+  apiKey: 'AIzaSyAIv0Lh3jE7gOxRQu5zMt-eYkmhtvXs5xw',
+  authDomain: 'nas-wheel.firebaseapp.com',
+  databaseURL: 'https://nas-wheel-default-rtdb.asia-southeast1.firebasedatabase.app/',
+  projectId: 'nas-wheel',
+  storageBucket: 'nas-wheel.firebasestorage.app',
+  messagingSenderId: '53339411018',
+  appId: '1:53339411018:web:db2ae050d23bc551e1ccb3',
 }
 
 export const SYNC_ENABLED = firebaseConfig.databaseURL.trim().length > 0
