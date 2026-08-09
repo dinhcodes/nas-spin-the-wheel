@@ -11,3 +11,7 @@ out/
 # misc
 .DS_Store
 next-env.d.ts
+
+# local test/screenshot artifacts
+*.png
+scripts/*.mjs
