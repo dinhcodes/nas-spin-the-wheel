@@ -12,6 +12,7 @@ import {
   defaultState,
   ITEM_ORDER,
   LABELS,
+  PRIORITY_HIGH,
   type ItemKey,
   type State,
 } from '@/lib/lucky-draw'
@@ -144,7 +145,7 @@ export function Control({
                 {!isWild && (
                   <button
                     onClick={() =>
-                      setItem(key, { priority: priority ? 1 : 2 })
+                      setItem(key, { priority: priority ? 1 : PRIORITY_HIGH })
                     }
                     className={cn(
                       'rounded-full border px-2 py-0.5 text-xs',

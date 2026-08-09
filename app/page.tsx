@@ -44,8 +44,8 @@ export default function Page() {
           Spin the Wheel
         </h1>
       </header>
-
-      <section className="relative z-10 mx-auto max-w-5xl px-4 pt-4 pb-16">
+  
+      <section className="relative z-10 mx-auto max-w-5xl px-4 pt-4 pb-16 mt-[40px]">
         <Wheel
           state={state}
           getNow={getNow}

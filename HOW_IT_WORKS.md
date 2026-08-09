@@ -34,7 +34,7 @@ npm run build    # static site -> ./out
 ```ts
 {
   items: {
-    poleTrial: { label: "Pole Trial", qty: 8, priority: 2, boostPct: 0 },
+    poleTrial: { label: "Pole Trial", qty: 8, priority: 1.4, boostPct: 0 },
     // ...one entry per prize, plus:
     wildcard:  { label: "?", qty: Infinity, priority: 1, boostPct: 0 },
   },
@@ -49,8 +49,8 @@ npm run build    # static site -> ./out
 
 - `qty` — stock left. Hits 0 → the item stops appearing (same as the old Python
   `quantity <= 0` skip).
-- `priority` — used directly as a weight multiplier. `1` = normal, `2` = clear
-  it faster. Hammock Trial, Hoop Trial, Pole Trial are `2`.
+- `priority` — used directly as a weight multiplier. `1` = normal, `1.4` = clear
+  it faster. Hammock Trial, Hoop Trial, Pole Trial are `1.4`.
 - `boostPct` — engine-only weight multiplier (`50` = ×1.5). No UI — the ★ priority
   toggle is the operator's lever now.
 - Display names are **not** read from the stored `label`; they come from `LABELS`
@@ -110,8 +110,9 @@ weight = qty × priority × (1 + boostPct/100)
 
 Because `pace` is proportional to `qty`, giving each prize a share proportional
 to that weight means — with priority/boost at defaults — each prize is drawn at
-exactly its own `pace`. Bumping `priority` to 2 makes that prize win more often,
-so it clears earlier. That's why the three trial prizes empty out first.
+exactly its own `pace`. Raising `priority` above 1 (the trials use `1.4`) makes
+that prize win more often, so it clears earlier. That's why the three trial
+prizes empty out first.
 
 **Sanity check.** `npm run check` runs a full 2-day simulation. Latest result:
 

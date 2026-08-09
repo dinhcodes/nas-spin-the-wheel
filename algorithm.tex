@@ -1,0 +1,189 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath, amssymb}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage[colorlinks=true, urlcolor=blue]{hyperref}
+
+\newcommand{\R}{\mathcal{R}}
+\newcommand{\clip}{\operatorname{clip}}
+
+\title{\textbf{NAS Spin-the-Wheel: The Pacing Model}}
+\author{Lucky-draw engine (\texttt{lib/lucky-draw.ts})}
+\date{Event: 12--13 August 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+The wheel shows eight equal-looking slices, but the winner is chosen by a
+self-correcting pacing model rather than by the visual. Each prize's draw
+probability equals the rate at which it must be handed out so its stock reaches
+zero exactly when the event ends; a wildcard ``\texttt{?}'' absorbs whatever
+probability the real prizes do not need. This note states the model and lists
+the values in use.
+\end{abstract}
+
+\section{Notation}
+
+\begin{center}
+\begin{tabular}{c l}
+\toprule
+Symbol & Meaning \\
+\midrule
+$t$ & current time \\
+$q_i$ & stock remaining of prize $i$ \\
+$\R = \{\, i : q_i > 0 \,\}$ & real prizes still in stock \\
+$Q = \sum_{i \in \R} q_i$ & total real stock remaining \\
+$\pi_i$ & priority multiplier of prize $i$ \\
+$b_i$ & manual boost of prize $i$ (percent) \\
+$s(t)$ & effective spins per 30-minute block \\
+$R(t)$ & expected spins remaining until the event ends \\
+$\rho_i$ & pace of prize $i$ \\
+$P_i,\; P_?$ & draw probability of prize $i$ / of the wildcard \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{The model}
+
+\subsection{Effective spin rate}
+
+Let $r_{30}(t)$ be the number of spins recorded in the rolling window
+$(t-30\text{min},\,t]$. With auto-pacing on, in event hours, once at least
+$m=5$ spins have been observed, the model tracks the live rate; otherwise it
+uses the seed $s_0$:
+\begin{equation}
+s(t) =
+\begin{cases}
+r_{30}(t), & \text{auto on} \;\wedge\; \text{in event} \;\wedge\; r_{30}(t) \ge m, \\[4pt]
+s_0, & \text{otherwise.}
+\end{cases}
+\end{equation}
+
+\subsection{Expected spins remaining}
+
+The event is partitioned into 30-minute blocks ($\Delta = 30$~min) with start
+times $a_k$. For the block in progress the remaining fraction is prorated:
+\begin{equation}
+f_k(t) = \clip\!\left(\frac{a_k + \Delta - t}{\Delta},\; 0,\; 1\right),
+\qquad
+R(t) = s(t)\sum_{k} f_k(t).
+\end{equation}
+Every block carries equal weight, so $\sum_k f_k(t)$ is simply the number of
+30-minute blocks left (with the current one prorated).
+
+\subsection{Pace, wildcard, and weights}
+
+Each in-stock prize has a \emph{pace} --- the probability it should be drawn now
+so its stock runs out exactly at the end:
+\begin{equation}
+\rho_i = \frac{q_i}{R(t)}, \qquad i \in \R.
+\end{equation}
+The wildcard takes whatever probability the real prizes do not require:
+\begin{equation}
+\boxed{\;
+P_? = \clip\!\Big(1 - \textstyle\sum_{i \in \R}\rho_i,\; 0,\; 1\Big)
+     = \max\!\Big(0,\; 1 - \tfrac{Q}{R(t)}\Big).
+\;}
+\end{equation}
+The remaining budget $1-P_?$ is split among the real prizes in proportion to a
+weight that folds in priority and manual boost:
+\begin{equation}
+w_i = q_i \,\pi_i \left(1 + \frac{b_i}{100}\right),
+\qquad
+\boxed{\;
+P_i = (1 - P_?)\,\frac{w_i}{\sum_{j \in \R} w_j}.
+\;}
+\end{equation}
+The winner is then sampled from the categorical distribution
+$\big(P_i\big)_{i \in \R} \cup \{P_?\}$; the winning prize's stock is decremented
+by one (or, for the wildcard, a counter is incremented).
+
+\section{The pace identity}
+
+Note that $P_?$ is computed from raw stock, \emph{not} from the weights --- so
+priority and boost never change how much probability goes to ``\texttt{?}'';
+they only redistribute it among the real prizes. With defaults
+($\pi_i = 1,\; b_i = 0$, hence $w_i = q_i$) and while there is slack
+($Q \le R$, so $1-P_? = Q/R$):
+\begin{equation}
+P_i = \frac{Q}{R}\cdot\frac{q_i}{Q} = \frac{q_i}{R(t)} = \rho_i .
+\end{equation}
+Every prize is drawn at exactly its own pace, so all stocks reach zero together
+at the end. Raising $\pi_i$ above $1$ front-loads prize $i$ (it clears earlier);
+once it hits zero its weight vanishes and that budget flows to the rest.
+
+\section{Edge cases}
+
+\begin{align}
+\R = \varnothing &\;\Rightarrow\; P_? = 1 \quad\text{(all real prizes gone)},\\
+R(t) \le 0 &\;\Rightarrow\; P_? = 0,\quad P_i = \frac{w_i}{\sum_j w_j}
+\quad\text{(event over: hand out the rest now)},\\
+Q > R(t) &\;\Rightarrow\; P_? = 0 \quad\text{(behind schedule: every spin is a real prize).}
+\end{align}
+
+\section{Configured values}
+
+\subsection{Prizes (starting state)}
+
+Priority for the three trials is $\pi_{\text{high}} = 1.4$; everything else is
+$1$. All manual boosts start at $b_i = 0$.
+
+\begin{center}
+\begin{tabular}{l r r r r}
+\toprule
+Prize $i$ & Stock $q_i$ & Priority $\pi_i$ & Boost $b_i$ & Weight $w_i$ \\
+\midrule
+Pole Cloth      & 2  & 1.0 & 0 & 2.0 \\
+Gym Bag         & 3  & 1.0 & 0 & 3.0 \\
+Hammock Trial   & 10 & 1.4 & 0 & 14.0 \\
+Hoop Trial      & 10 & 1.4 & 0 & 14.0 \\
+Pole Trial      & 8  & 1.4 & 0 & 11.2 \\
+Keychain        & 45 & 1.0 & 0 & 45.0 \\
+Sticker         & 50 & 1.0 & 0 & 50.0 \\
+\midrule
+\textbf{Total real} $Q$ & \textbf{128} & & & \textbf{139.2} \\
+\texttt{?} (wildcard) & $\infty$ & --- & --- & --- \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Timing and rate}
+
+\begin{center}
+\begin{tabular}{l l}
+\toprule
+Quantity & Value \\
+\midrule
+Event days & 12 Aug, 13 Aug 2026 \\
+Open hours & 10:00--18:00 (each day) \\
+Block length $\Delta$ & 30 minutes \\
+Blocks per day & 16 \\
+Total blocks $N$ & 32 \\
+Seed rate $s_0$ & 8 spins/block \\
+Expected total spins & $N \cdot s_0 = 256$ \\
+Rolling window & 30 minutes \\
+Min.\ sample $m$ & 5 spins \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The operator sets the ``expected total spins'' $E$ directly; the seed follows as
+$s_0 = E / N$.
+
+\section{Worked example: the priority front-load}
+
+At full stock the three trials hold $28$ of $128$ units ($21.9\%$), but their
+combined weight is $39.2$ of $139.2$:
+\begin{equation}
+\frac{w_{\text{Hammock}} + w_{\text{Hoop}} + w_{\text{Pole}}}{\sum_j w_j}
+= \frac{14 + 14 + 11.2}{139.2} = \frac{39.2}{139.2} \approx 28.2\%
+\end{equation}
+of every real-prize draw --- roughly $1.29\times$ their natural pace. So the
+trials trickle out a little ahead of the commons, while the wildcard rate
+$P_?$ (fixed by $1 - Q/R$) is left untouched.
+
+\end{document}

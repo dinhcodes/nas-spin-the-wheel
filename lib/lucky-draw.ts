@@ -53,6 +53,10 @@ export const ITEM_ORDER: ItemKey[] = [
 
 export const HIGHER_PRIORITY: ItemKey[] = ["hammock", "hoopTrial", "poleTrial"];
 
+// Weight multiplier for the trial prizes — front-loads them so they clear a bit
+// earlier than the commons, without starving anything.
+export const PRIORITY_HIGH = 1.4;
+
 // Display names live in code (never in stored state) so renames apply instantly.
 export const LABELS: Record<ItemKey, string> = {
   poleCloth: "Pole Cloth",
@@ -94,9 +98,9 @@ export function defaultState(): State {
     items: {
       poleCloth: mk(LABELS.poleCloth, 2),
       gymBag: mk(LABELS.gymBag, 3),
-      hammock: mk(LABELS.hammock, 10, 2),
-      hoopTrial: mk(LABELS.hoopTrial, 10, 2),
-      poleTrial: mk(LABELS.poleTrial, 8, 2),
+      hammock: mk(LABELS.hammock, 10, PRIORITY_HIGH),
+      hoopTrial: mk(LABELS.hoopTrial, 10, PRIORITY_HIGH),
+      poleTrial: mk(LABELS.poleTrial, 8, PRIORITY_HIGH),
       keychain: mk(LABELS.keychain, 45),
       sticker: mk(LABELS.sticker, 50),
       wildcard: mk(LABELS.wildcard, Infinity),
