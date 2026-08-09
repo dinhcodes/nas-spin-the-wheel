@@ -7,6 +7,7 @@ import {
   effectiveSpinsPerBlock,
   inEvent,
   expectedTotalSpins,
+  eventPeakBlocks,
   spinsPerBlockForTotal,
   defaultState,
   ITEM_ORDER,
@@ -25,10 +26,10 @@ export function Control({
   setState: (fn: (s: State) => State) => void
   getNow: () => number
 }) {
-  // Re-render every 3s so live odds/tracker follow the clock.
+  // Re-render every 1s so the live rolling rate is visibly tracked.
   const [, setTick] = useState(0)
   useEffect(() => {
-    const id = setInterval(() => setTick((t) => t + 1), 3000)
+    const id = setInterval(() => setTick((t) => t + 1), 1000)
     return () => clearInterval(id)
   }, [])
 
@@ -43,6 +44,10 @@ export function Control({
   const usingLive = state.autoRate && inEvent(state, now) && rolling >= 5
   const expectedTotal = expectedTotalSpins(state)
   const seedPerBlock = Math.round(state.spinsPerBlock)
+  // The whole-event total implied by the current live-moderated rate.
+  const liveTotal = Math.round(
+    effectiveSpinsPerBlock(state, now) * eventPeakBlocks(state),
+  )
   const baselineWild =
     expectedTotal > 0
       ? Math.max(0, Math.round((1 - realLeft / expectedTotal) * 100))
@@ -62,7 +67,8 @@ export function Control({
         <Stat
           label="Pacing at / 30-min block"
           value={effective.toString()}
-          hint={usingLive ? 'from live rate' : 'from seed'}
+          hint={usingLive ? 'live-moderated' : 'from seed'}
+          valueClass={usingLive ? 'text-live' : undefined}
         />
         <Stat label="Real prizes left" value={realLeft.toString()} />
       </div>
@@ -92,6 +98,12 @@ export function Control({
             className="bg-background w-28 rounded-lg border px-3 py-2 text-right text-lg font-semibold"
           />
         </div>
+        {usingLive && (
+          <p className="text-live text-sm font-medium">
+            Live-moderated pace: ~{effective}/block → ≈{liveTotal} spins expected
+            (auto-adjusting from the last 30 min)
+          </p>
+        )}
         <label className="flex items-center gap-3 border-t pt-3">
           <input
             type="checkbox"
@@ -206,16 +218,24 @@ function Stat({
   label,
   value,
   hint,
+  valueClass,
 }: {
   label: string
   value: string
   hint?: string
+  valueClass?: string
 }) {
   return (
     <div className="bg-card rounded-2xl border p-3 text-center">
       <p className="text-muted-foreground text-xs">{label}</p>
-      <p className="mt-1 text-lg font-bold tabular-nums">{value}</p>
-      {hint && <p className="text-muted-foreground text-[10px]">{hint}</p>}
+      <p className={cn('mt-1 text-lg font-bold tabular-nums', valueClass)}>
+        {value}
+      </p>
+      {hint && (
+        <p className={cn('text-[10px]', valueClass ?? 'text-muted-foreground')}>
+          {hint}
+        </p>
+      )}
     </div>
   )
 }
