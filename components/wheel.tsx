@@ -173,9 +173,11 @@ export function Wheel({
             </p>
             {PRIZE_DETAILS[winner] && (
               <div className="bg-secondary/30 mt-5 rounded-2xl px-4 py-3">
-                <p className="text-secondary-foreground font-semibold">
-                  {PRIZE_DETAILS[winner]!.when}
-                </p>
+                {PRIZE_DETAILS[winner]!.when && (
+                  <p className="text-secondary-foreground font-semibold">
+                    {PRIZE_DETAILS[winner]!.when}
+                  </p>
+                )}
                 <p className="text-muted-foreground mt-1 text-sm">
                   {PRIZE_DETAILS[winner]!.offer}
                 </p>
