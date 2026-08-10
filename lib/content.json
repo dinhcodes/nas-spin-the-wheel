@@ -21,18 +21,27 @@
     "sticker": "Sticker",
     "wildcard": "Try Again"
   },
+  "stock": {
+    "poleCloth": 2,
+    "gymBag": 3,
+    "hammock": 10,
+    "hoopTrial": 10,
+    "poleTrial": 20,
+    "keychain": 45,
+    "sticker": 50
+  },
   "prizeDetails": {
     "poleTrial": {
-      "when": "Tentatively Sat 22 / Sun 23 or Sat 29 / Sun 30 Aug",
-      "offer": "You go free — bring a friend for just $10 more (U.P. $15)"
+      "when": "Sat 15/8, 22/8, 29/8 @ 3:20pm · Sun 16/8, 23/8, 30/8 @ 4:30pm",
+      "offer": "Pole class with Mauve — talk to the exco to arrange your slot."
     },
     "hammock": {
-      "when": "Sat 29 Aug, 9:00 AM",
-      "offer": "You go free — bring a friend for just $10 more (U.P. $15)"
+      "when": "29 Oct, 9:00–10:00 AM",
+      "offer": "Free trial — you must bring a plus-one (friend)."
     },
     "hoopTrial": {
-      "when": "Lyra · Sun 30 Aug, 3:30 PM",
-      "offer": "You go free — bring a friend for just $10 more (U.P. $15)"
+      "when": "30 Oct, 1:20–2:20 PM",
+      "offer": "Free trial — you must bring a plus-one (friend)."
     }
   }
 }

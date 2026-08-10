@@ -78,15 +78,16 @@ export function defaultState(): State {
     priority,
     boostPct: 0,
   });
+  const stock = content.stock as Record<string, number>;
   return {
     items: {
-      poleCloth: mk(LABELS.poleCloth, 2),
-      gymBag: mk(LABELS.gymBag, 3),
-      hammock: mk(LABELS.hammock, 10, PRIORITY_HIGH),
-      hoopTrial: mk(LABELS.hoopTrial, 10, PRIORITY_HIGH),
-      poleTrial: mk(LABELS.poleTrial, 8, PRIORITY_HIGH),
-      keychain: mk(LABELS.keychain, 45),
-      sticker: mk(LABELS.sticker, 50),
+      poleCloth: mk(LABELS.poleCloth, stock.poleCloth),
+      gymBag: mk(LABELS.gymBag, stock.gymBag),
+      hammock: mk(LABELS.hammock, stock.hammock, PRIORITY_HIGH),
+      hoopTrial: mk(LABELS.hoopTrial, stock.hoopTrial, PRIORITY_HIGH),
+      poleTrial: mk(LABELS.poleTrial, stock.poleTrial, PRIORITY_HIGH),
+      keychain: mk(LABELS.keychain, stock.keychain),
+      sticker: mk(LABELS.sticker, stock.sticker),
       wildcard: mk(LABELS.wildcard, Infinity),
     },
     spinsPerBlock: 8, // seed: ~256 spins across the event (tune to real footfall)
