@@ -7,10 +7,13 @@
 // Core idea:
 //   pace_i = qty_i / expectedRemainingSpins   -> P this item should be drawn now
 //            so its stock hits zero right at the end.
-//   P("?") = 1 - sum(pace)  -> the "?" wildcard absorbs the slack when real
-//            prizes are ahead of schedule, and shrinks to 0 when they fall behind.
+//   P("Try Again") = 1 - sum(pace)  -> the "Try Again" wildcard absorbs the
+//            slack when real prizes are ahead of schedule, and shrinks to 0 when
+//            they fall behind.
 // Priority and manual boost only reshape the split *among real items*; they do
-// not manufacture extra "?".
+// not manufacture extra "Try Again".
+
+import content from "./content.json";
 
 export type ItemKey =
   | "poleCloth"
@@ -34,7 +37,7 @@ export interface State {
   spinsPerBlock: number; // seed / fallback expected spins per 30-min block at peak
   autoRate: boolean; // drive pacing from the live rolling spin rate
   spinLog: number[]; // epoch-ms timestamps, one per spin
-  wildcardGiven: number; // how many "?" have been redeemed
+  wildcardGiven: number; // how many "Try Again" have been redeemed
   eventDays: string[]; // ["2026-08-12","2026-08-13"], local time
   startHour: number; // 10
   endHour: number; // 18 (exclusive)
@@ -57,33 +60,14 @@ export const HIGHER_PRIORITY: ItemKey[] = ["hammock", "hoopTrial", "poleTrial"];
 // earlier than the commons, without starving anything.
 export const PRIORITY_HIGH = 1.4;
 
-// Display names live in code (never in stored state) so renames apply instantly.
-export const LABELS: Record<ItemKey, string> = {
-  poleCloth: "Pole Cloth",
-  gymBag: "Gym Bag",
-  hammock: "Hammock Trial",
-  hoopTrial: "Hoop Trial",
-  poleTrial: "Pole Trial",
-  keychain: "Keychain",
-  sticker: "Sticker",
-  wildcard: "?",
-};
+// All player-facing copy lives in content.json (never in stored state) so
+// renames apply instantly.
+export const LABELS = content.labels as Record<ItemKey, string>;
 
 // Extra info shown in the winner modal for the trial prizes.
-export const PRIZE_DETAILS: Partial<Record<ItemKey, { when: string; offer: string }>> = {
-  poleTrial: {
-    when: "Tentatively Sat 22 / Sun 23 Aug",
-    offer: "You go free — bring a friend for just $10 more (U.P. $15)",
-  },
-  hammock: {
-    when: "Sat 29 Aug, 9:00 AM",
-    offer: "You go free — bring a friend for just $10 more (U.P. $15)",
-  },
-  hoopTrial: {
-    when: "Lyra · Sun 30 Aug, 3:30 PM",
-    offer: "You go free — bring a friend for just $10 more (U.P. $15)",
-  },
-};
+export const PRIZE_DETAILS = content.prizeDetails as Partial<
+  Record<ItemKey, { when: string; offer: string }>
+>;
 
 const BLOCK_MS = 30 * 60 * 1000;
 
@@ -189,7 +173,7 @@ export interface Odds {
   probs: Record<ItemKey, number>;
   remaining: number; // expected spins left
   sumPace: number; // required real-prize rate per spin
-  behind: boolean; // sumPace >= 1: cannot afford any "?"
+  behind: boolean; // sumPace >= 1: cannot afford any "Try Again"
 }
 
 // The draw distribution for the next spin.
@@ -248,7 +232,7 @@ export function pickWinner(
   return "wildcard"; // rounding fallback
 }
 
-// Apply a draw immutably: decrement the winner (or bump the "?" counter),
+// Apply a draw immutably: decrement the winner (or bump the "Try Again" counter),
 // and log the spin timestamp.
 export function applyDraw(state: State, winner: ItemKey, nowMs: number): State {
   const items = { ...state.items };

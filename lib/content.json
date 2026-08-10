@@ -1,0 +1,37 @@
+{
+  "heading": "Spin the Wheel",
+  "loading": "Loading…",
+  "spin": "SPIN",
+  "spinning": "Spinning…",
+  "scanCaption": "Scan to spin the wheel",
+  "winner": {
+    "eyebrow": "Winner",
+    "redeem": "Redeem",
+    "dismiss": "Nevermind",
+    "footer": "you got a prize!"
+  },
+  "labels": {
+    "poleCloth": "Pole Cloth",
+    "gymBag": "Gym Bag",
+    "hammock": "Hammock Trial",
+    "hoopTrial": "Hoop Trial",
+    "poleTrial": "Pole Trial",
+    "keychain": "Keychain",
+    "sticker": "Sticker",
+    "wildcard": "Try Again"
+  },
+  "prizeDetails": {
+    "poleTrial": {
+      "when": "Tentatively Sat 22 / Sun 23 Aug",
+      "offer": "You go free — bring a friend for just $10 more (U.P. $15)"
+    },
+    "hammock": {
+      "when": "Sat 29 Aug, 9:00 AM",
+      "offer": "You go free — bring a friend for just $10 more (U.P. $15)"
+    },
+    "hoopTrial": {
+      "when": "Lyra · Sun 30 Aug, 3:30 PM",
+      "offer": "You go free — bring a friend for just $10 more (U.P. $15)"
+    }
+  }
+}

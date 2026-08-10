@@ -11,6 +11,7 @@ import {
   type State,
 } from '@/lib/lucky-draw'
 import { Confetti } from '@/components/confetti'
+import content from '@/lib/content.json'
 
 // Equal-looking slices; the winner is decided by the pacing model, then the
 // wheel is animated to land on that slice.
@@ -107,9 +108,7 @@ export function Wheel({
           <circle cx={C} cy={C} r={R + 3} fill="#fffdfb" />
           {ITEM_ORDER.map((key, i) => {
             const [lx, ly] = pointOnCircle(i * SEG + SEG / 2, R * 0.62)
-            const words =
-              key === 'wildcard' ? ['?'] : LABELS[key].split(' ')
-            const wild = key === 'wildcard'
+            const words = LABELS[key].split(' ')
             return (
               <g key={key}>
                 <path
@@ -122,7 +121,7 @@ export function Wheel({
                   x={lx}
                   y={ly}
                   fill="#4b343c"
-                  fontSize={wild ? 16 : 7.5}
+                  fontSize={7.5}
                   fontWeight={700}
                   textAnchor="middle"
                   dominantBaseline="middle"
@@ -159,7 +158,7 @@ export function Wheel({
         disabled={spinning}
         className="bg-warm-ivory text-matterhorn rounded-full px-14 py-4 text-xl font-bold tracking-widest shadow-[0_0_40px_-4px_rgba(201,162,207,0.7)] transition-all hover:scale-[1.03] active:translate-y-px disabled:opacity-60"
       >
-        {spinning ? 'Spinning…' : 'SPIN'}
+        {spinning ? content.spinning : content.spin}
       </button>
 
       {winner && (
@@ -167,7 +166,7 @@ export function Wheel({
           <Confetti />
           <div className="bg-card w-full max-w-md rounded-3xl p-10 text-center shadow-2xl">
             <p className="text-muted-foreground text-sm tracking-widest uppercase">
-              Winner
+              {content.winner.eyebrow}
             </p>
             <p className="font-heading text-primary mt-2 text-5xl font-bold">
               {LABELS[winner]}
@@ -187,17 +186,17 @@ export function Wheel({
                 onClick={redeem}
                 className="bg-matterhorn text-warm-ivory hover:bg-matterhorn/90 flex-1 rounded-full px-6 py-3 font-bold shadow transition-colors"
               >
-                Redeem
+                {content.winner.redeem}
               </button>
               <button
                 onClick={() => setWinner(null)}
                 className="border-border text-muted-foreground hover:bg-muted flex-1 rounded-full border px-6 py-3 font-medium transition-colors"
               >
-                Nevermind
+                {content.winner.dismiss}
               </button>
             </div>
             <p className="text-muted-foreground mt-4 text-xs">
-              yipee! congrats.
+              {content.winner.footer}
             </p>
           </div>
         </div>

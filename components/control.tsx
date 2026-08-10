@@ -74,13 +74,13 @@ export function Control({
         <Stat label="Real prizes left" value={realLeft.toString()} />
       </div>
 
-      {/* how many spins to expect — the dial that controls the ? rate */}
+      {/* how many spins to expect — the dial that controls the "Try Again" rate */}
       <div className="bg-card flex flex-col gap-4 rounded-2xl border p-4">
         <div className="flex items-center justify-between gap-4">
           <div>
             <p className="font-medium">Expected total spins (both days)</p>
             <p className="text-muted-foreground text-sm">
-              This means: {baselineWild}% won't win anything valuable (aka: they get the ? prize)
+              This means: {baselineWild}% won't win anything valuable (aka: they get the "Try Again" prize)
             </p>
           </div>
           <input

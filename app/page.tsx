@@ -7,6 +7,7 @@ import { applyDraw, type ItemKey } from '@/lib/lucky-draw'
 import { Wheel } from '@/components/wheel'
 import { Control } from '@/components/control'
 import { BlobBackground } from '@/components/blob-background'
+import content from '@/lib/content.json'
 
 export default function Page() {
   const { state, setState, loaded } = useDrawState()
@@ -22,7 +23,7 @@ export default function Page() {
     return (
       <main className="flex min-h-screen items-center justify-center">
         <BlobBackground />
-        <p className="relative z-10 text-warm-ivory/70">Loading…</p>
+        <p className="relative z-10 text-warm-ivory/70">{content.loading}</p>
       </main>
     )
   }
@@ -42,7 +43,7 @@ export default function Page() {
 
       <header className="relative z-10 mx-auto flex max-w-5xl flex-col items-center px-4 pt-10 pb-2">
         <h1 className="font-heading text-warm-ivory text-4xl font-bold drop-shadow">
-          Spin the Wheel
+          {content.heading}
         </h1>
       </header>
   
@@ -58,10 +59,10 @@ export default function Page() {
       <aside className="fixed top-1/2 right-8 z-20 hidden -translate-y-1/2 flex-col items-center gap-3 lg:flex">
         <div className="rounded-2xl bg-white p-4 shadow-2xl">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={qrSrc} alt="Scan to spin the wheel" className="size-[172px]" />
+          <img src={qrSrc} alt={content.scanCaption} className="size-[172px]" />
         </div>
         <p className="font-heading text-warm-ivory text-lg font-semibold drop-shadow">
-          Scan to spin the wheel
+          {content.scanCaption}
         </p>
       </aside>
 

@@ -39,7 +39,7 @@ for (const t of [
   assert(Math.abs(sum(ITEM_ORDER.map((k) => o.probs[k])) - 1) < 1e-9, "sum=1");
 }
 
-// 2. When spins vastly outnumber prizes, the "?" wildcard dominates.
+// 2. When spins vastly outnumber prizes, the "Try Again" wildcard dominates.
 {
   const s = defaultState();
   s.spinsPerBlock = 90; // ~2880 spins vs 128 prizes
@@ -55,7 +55,7 @@ for (const t of [
   assert(o.probs.poleTrial === 0, "sold-out excluded");
 }
 
-// 4. Behind schedule (little time, stock left) => no "?" at all.
+// 4. Behind schedule (little time, stock left) => no "Try Again" at all.
 {
   const o = computeOdds(defaultState(), at("2026-08-13", 17, 55));
   assert(o.probs.wildcard === 0, `behind => wild 0, got ${o.probs.wildcard}`);

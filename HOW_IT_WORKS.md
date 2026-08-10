@@ -2,7 +2,7 @@
 
 A prize wheel for a 2-day booth. The wheel looks fair (8 equal slices), but the
 winner is picked by code so the good prizes get spread out over both days
-instead of being gone in the first hour. Leftover spins hand out a `?`
+instead of being gone in the first hour. Leftover spins hand out a `Try Again`
 (a generic consolation).
 
 Single-page Next.js app. No backend. All state is in the browser's
@@ -36,12 +36,12 @@ npm run build    # static site -> ./out
   items: {
     poleTrial: { label: "Pole Trial", qty: 8, priority: 1.4, boostPct: 0 },
     // ...one entry per prize, plus:
-    wildcard:  { label: "?", qty: Infinity, priority: 1, boostPct: 0 },
+    wildcard:  { label: "Try Again", qty: Infinity, priority: 1, boostPct: 0 },
   },
   spinsPerBlock: 8,    // seed per 30-min block (set via "expected total spins")
   autoRate: true,      // pace from the live rolling 30-min spin rate
   spinLog: [ ...epochMs ],   // one timestamp per spin
-  wildcardGiven: 0,    // how many "?" have been redeemed
+  wildcardGiven: 0,    // how many "Try Again" have been redeemed
   eventDays: ["2026-08-12", "2026-08-13"],
   startHour: 10, endHour: 18,
 }
@@ -53,8 +53,9 @@ npm run build    # static site -> ./out
   it faster. Hammock Trial, Hoop Trial, Pole Trial are `1.4`.
 - `boostPct` — engine-only weight multiplier (`50` = ×1.5). No UI — the ★ priority
   toggle is the operator's lever now.
-- Display names are **not** read from the stored `label`; they come from `LABELS`
-  in `lib/lucky-draw.ts`, so renames apply instantly even over old saved state.
+- Display names are **not** read from the stored `label`; all player-facing copy
+  lives in `lib/content.json` (surfaced via `LABELS` in `lib/lucky-draw.ts`), so
+  renames apply instantly even over old saved state.
 
 ## The algorithm (this is the important part)
 
@@ -82,26 +83,26 @@ That's the probability this prize should be drawn on the next spin so its stock
 runs out exactly at the end. Example: 8 Pole Trials with ~250 spins left →
 `8/250 = 0.032`, about 1 in every 31 spins.
 
-**Step 3 — the `?` soaks up whatever's left.**
-Add up every prize's `pace`. Whatever probability is left over goes to `?`:
+**Step 3 — the `Try Again` soaks up whatever's left.**
+Add up every prize's `pace`. Whatever probability is left over goes to `Try Again`:
 
 ```
-P("?") = 1 − sum(pace)
+P("Try Again") = 1 − sum(pace)
 ```
 
-`?` is simply whatever probability the real prizes don't need. Its size is
+`Try Again` is simply whatever probability the real prizes don't need. Its size is
 driven entirely by expected-spins vs. prizes: expect far more spins than prizes
-and `?` is high; expect spins ≈ prizes and `?` ≈ 0. Example: 128 prizes with
-~256 expected spins over the event → `sum(pace)` ≈ 0.5, so `?` ≈ 50% on average.
-(If you instead assumed ~2,880 spins, `?` would be ~95% — there just aren't
+and `Try Again` is high; expect spins ≈ prizes and `Try Again` ≈ 0. Example: 128 prizes with
+~256 expected spins over the event → `sum(pace)` ≈ 0.5, so `Try Again` ≈ 50% on average.
+(If you instead assumed ~2,880 spins, `Try Again` would be ~95% — there just aren't
 enough prizes to give one on most spins.) As prizes sit unclaimed and time runs
-down, `remainingSpins` shrinks, `pace` climbs, and `?` drops. If you ever fall
-behind (more stock than spins left), `sum(pace)` goes over 1, `?` drops to 0, and
+down, `remainingSpins` shrinks, `pace` climbs, and `Try Again` drops. If you ever fall
+behind (more stock than spins left), `sum(pace)` goes over 1, `Try Again` drops to 0, and
 every spin is a real prize until you catch up. It self-corrects — no timers, no
 scheduled jobs.
 
 **Where priority comes in.** Priority (and a still-supported but now UI-less
-`boostPct`) only changes the split *between real prizes*, never how much `?`
+`boostPct`) only changes the split *between real prizes*, never how much `Try Again`
 shows up. The weight for a real prize is:
 
 ```
@@ -137,7 +138,7 @@ click:
    (`cubic-bezier(0.1, 0.9, 0.2, 1)`).
 3. When the CSS transition ends, it shows the winner card + confetti with two
    buttons. **Redeem** calls `applyDraw` (drops the stock by one, or bumps the
-   `?` counter) and logs the spin; **Nevermind** closes and changes nothing — so
+   `Try Again` counter) and logs the spin; **Nevermind** closes and changes nothing — so
    stock only moves when a prize is actually handed over.
 
 So the visual is decoration; the result was decided before the wheel moved.
@@ -149,7 +150,7 @@ event-facing wheel.
 
 - **Stock** — `+`/`−` or type a number. Changes `qty`, which changes odds live.
 - **Expected total spins** — the main dial (footfall over both days). It sets the
-  baseline `?` rate, shown right next to the field as you type.
+  baseline `Try Again` rate, shown right next to the field as you type.
 - **★ clear first** toggle — flips a prize to higher priority so it empties out
   earlier. This is the lever for pushing a specific prize. (The old manual
   Boost % column was removed to keep the panel clean; `boostPct` still exists in
@@ -165,9 +166,9 @@ event-facing wheel.
 ## The one thing to calibrate
 
 Set **expected total spins** to your realistic footfall over the two days. That
-single number sets the `?` rate: if it's close to your prize count (128), almost
-every spin gives a real prize and `?` is rare; if it's much larger, `?` fills the
-gap so prizes last. The panel shows the resulting baseline `?` % as you type.
+single number sets the `Try Again` rate: if it's close to your prize count (128), almost
+every spin gives a real prize and `Try Again` is rare; if it's much larger, `Try Again` fills the
+gap so prizes last. The panel shows the resulting baseline `Try Again` % as you type.
 Nothing else needs to change — the math adapts to whatever number you set, and in
 auto mode it re-tunes itself from the live spin rate during the event.
 
