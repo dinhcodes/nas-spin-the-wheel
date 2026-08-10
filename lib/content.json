@@ -8,7 +8,8 @@
     "eyebrow": "Winner",
     "redeem": "Redeem",
     "dismiss": "Nevermind",
-    "footer": "you got a prize!"
+    "footer": "you got a prize!",
+    "tryAgainFooter": "aw, better luck next spin!"
   },
   "labels": {
     "poleCloth": "Pole Cloth",
@@ -22,7 +23,7 @@
   },
   "prizeDetails": {
     "poleTrial": {
-      "when": "Tentatively Sat 22 / Sun 23 Aug",
+      "when": "Tentatively Sat 22 / Sun 23 or Sat 29 / Sun 30 Aug",
       "offer": "You go free — bring a friend for just $10 more (U.P. $15)"
     },
     "hammock": {

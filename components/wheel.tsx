@@ -196,7 +196,9 @@ export function Wheel({
               </button>
             </div>
             <p className="text-muted-foreground mt-4 text-xs">
-              {content.winner.footer}
+              {winner === 'wildcard'
+                ? content.winner.tryAgainFooter
+                : content.winner.footer}
             </p>
           </div>
         </div>
