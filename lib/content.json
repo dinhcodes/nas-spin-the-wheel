@@ -3,7 +3,7 @@
   "loading": "Loading…",
   "spin": "SPIN",
   "spinning": "Spinning…",
-  "scanCaption": "Scan to spin the wheel",
+  "scanCaption": "Go to our event website, follow our IG, and especially our Telegram group chat",
   "winner": {
     "eyebrow": "Winner",
     "redeem": "Redeem",
@@ -12,7 +12,7 @@
     "tryAgainFooter": "aw, better luck next spin!"
   },
   "labels": {
-    "poleCloth": "Pole Cloth",
+    "poleCloth / tissue": "Pole Cloth / Tissue",
     "gymBag": "Gym Bag",
     "hammock": "Hammock Trial",
     "hoopTrial": "Hoop Trial",
@@ -22,7 +22,7 @@
     "wildcard": "Try Again"
   },
   "stock": {
-    "poleCloth": 2,
+    "poleCloth / tissue": 10,
     "gymBag": 3,
     "hammock": 10,
     "hoopTrial": 10,
@@ -33,14 +33,14 @@
   "prizeDetails": {
     "poleTrial": {
       "when": "",
-      "offer": "Pole class with Mauve — talk to the exco to arrange your slot."
+      "offer": "Pole class with Mauve — talk to the exco to arrange your slot. Bring a friend for $10"
     },
     "hammock": {
-      "when": "29 Oct, 9:00–10:00 AM",
+      "when": "Sat, 29 Aug, 9:00–10:00 AM",
       "offer": "Free trial — you must bring a plus-one (friend) to register with you."
     },
     "hoopTrial": {
-      "when": "30 Oct, 1:20–2:20 PM",
+      "when": "Sun, 30 Aug, 1:20–2:20 PM",
       "offer": "Free trial — you must bring a plus-one (friend) to register with you."
     }
   }

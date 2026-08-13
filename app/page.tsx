@@ -47,24 +47,38 @@ export default function Page() {
         </h1>
       </header>
   
-      <section className="relative z-10 mx-auto max-w-5xl px-4 pt-4 pb-16 mt-[40px]">
-        <Wheel
-          state={state}
-          getNow={getNow}
-          onResult={(w: ItemKey) => setState((s) => applyDraw(s, w, getNow()))}
-        />
-      </section>
-
-      {/* QR to play — for big-screen viewers to scan; the wheel stays centered */}
-      <aside className="fixed top-1/2 right-8 z-20 hidden -translate-y-1/2 flex-col items-center gap-3 lg:flex">
-        <div className="rounded-2xl bg-white p-4 shadow-2xl">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={qrSrc} alt={content.scanCaption} className="size-[172px]" />
+      <section className="relative z-10 mx-auto mt-10 grid w-full max-w-[1400px] items-center gap-12 px-6 pt-4 pb-16 lg:grid-cols-[minmax(0,1fr)_minmax(380px,0.9fr)] xl:gap-20">
+        <div className="min-w-0">
+          <Wheel
+            state={state}
+            getNow={getNow}
+            onResult={(w: ItemKey) =>
+              setState((s) => applyDraw(s, w, getNow()))
+            }
+          />
         </div>
-        <p className="font-heading text-warm-ivory text-lg font-semibold drop-shadow">
-          {content.scanCaption}
-        </p>
-      </aside>
+
+        {/* Large enough to be scanned comfortably from across the venue. */}
+        <aside
+          aria-labelledby="qr-instructions"
+          className="mx-auto flex w-full max-w-[560px] flex-col items-center rounded-[2.5rem] border-2 border-white/40 bg-white/15 p-6 shadow-[0_24px_80px_rgba(0,0,0,0.35)] backdrop-blur-md sm:p-8 lg:max-w-none"
+        >
+          <div className="w-full rounded-[2rem] bg-white p-5 shadow-2xl sm:p-7">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={qrSrc}
+              alt={content.scanCaption}
+              className="aspect-square w-full"
+            />
+          </div>
+          <p
+            id="qr-instructions"
+            className="font-heading text-warm-ivory mt-7 max-w-[24ch] text-center text-2xl leading-tight font-bold drop-shadow-lg sm:text-3xl"
+          >
+            {content.scanCaption}
+          </p>
+        </aside>
+      </section>
 
       {showControl && (
         <div className="bg-hero fixed inset-0 z-40 overflow-y-auto">
